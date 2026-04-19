@@ -1,0 +1,1346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mooters, Mooteds and Moots - Portfolio</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @font-face {
+            font-family: 'Anton';
+            src: url('Anton-Regular.ttf') format('truetype');
+            font-weight: normal;
+            font-style: normal;
+        }
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body, h3, h4 { 
+            font-family: 'Open Sans', sans-serif; 
+            background-color: #020617; 
+            color: #f8fafc;
+        }
+        
+        h1, h2, .font-serif { 
+            font-family: 'Anton', sans-serif !important; 
+            font-weight: 400;
+            letter-spacing: 0.05em;
+        }
+
+        .modal-overlay { background: rgba(2, 6, 23, 0.98); backdrop-filter: blur(20px); }
+        
+        .bg-home {
+            background: linear-gradient(rgba(2, 6, 23, 0.9), rgba(15, 23, 42, 0.95)), 
+                        url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=2000');
+            background-size: cover;
+            background-attachment: fixed;
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+
+        /* Hide scrollbar for horizontal avatar bar */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+        .nav-link { transition: all 0.3s ease; }
+
+        .nav-active { color: white !important; border-bottom: 2px solid white; }
+
+        .bar {
+            background: #3b82f6;
+            width: 3px;
+            margin: 0 1px;
+            animation: equalize 1s infinite alternate;
+        }
+        @keyframes equalize {
+            0% { height: 5px; }
+            100% { height: 20px; }
+        }
+        
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes notebookReveal {
+            0% { 
+                clip-path: polygon(0% 100%, 50% 100%, 100% 100%, 50% 100%); 
+                opacity: 0; 
+                transform: translateY(20px) scale(0.95); 
+            }
+            100% { 
+                clip-path: polygon(-50% -50%, 150% -50%, 150% 150%, -50% 150%); 
+                opacity: 1; 
+                transform: translateY(0) scale(1); 
+            }
+        }
+        .anim-notebook-reveal { 
+            animation: notebookReveal 1.5s cubic-bezier(0.23, 1, 0.32, 1) forwards; 
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo, useRef } = React;
+
+        const Icon = ({ name, className = "w-5 h-5" }) => {
+            const paths = {
+                Mail: "M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z M22 6l-10 7L2 6",
+                X: "M18 6L6 18M6 6l12 12",
+                Instagram: "M7 2h10a5 5 0 0 1 5 5v10a5 5 0 0 1-5 5H7a5 5 0 0 1-5-5V7a5 5 0 0 1 5-5zm0 2a3 3 0 0 0-3 3v10a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3V7a3 3 0 0 0-3-3H7zm5 3a5 5 0 1 1 0 10 5 5 0 0 1 0-10zm0 2a3 3 0 1 0 0 6 3 3 0 0 0 0-6zm4.5-1a1 1 0 1 1 0 2 1 1 0 0 1 0-2z",
+                ArrowLeft: "M19 12H5M12 19l-7-7 7-7",
+                Play: "M5 3l14 9-14 9V3z", Menu: "M3 12h18M3 6h18M3 18h18",
+                Pause: "M6 4h4v16H6V4z M14 4h4v16h-4V4z",
+                User: "M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2 M12 7a4 4 0 100-8 4 4 0 000 8z",
+                Briefcase: "M16 7V5a2 2 0 00-2-2H10a2 2 0 00-2 2v2H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3z",
+                ChevronDown: "M6 9l6 6 6-6",
+                ChevronRight: "M9 18l6-6-6-6",
+                Cpu: "M4 4h16v16H4V4z M9 9h6v6H9V9z M12 2v2 M12 20v2 M2 12h2 M20 12h2",
+                Phone: "M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z",
+                Twitter: "M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z",
+                Gamepad: "M6 12h4M8 10v4M15 13h.01M18 10h.01M21 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z",
+                Facebook: "M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z",
+                YouTube: "M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.42a2.78 2.78 0 0 0-1.94 2C1 8.11 1 12 1 12s0 3.89.46 5.58a2.78 2.78 0 0 0 1.94 2c1.72.42 8.6.42 8.6.42s6.88 0 8.6-.42a2.78 2.78 0 0 0 1.94-2C23 15.89 23 12 23 12s0-3.89-.46-5.58z M9.75 15.02V8.98L15.5 12l-5.75 3.02z",
+                TikTok: "M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5"
+            };
+            return (
+                <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d={paths[name] || ""} />
+                </svg>
+            );
+        };
+
+        const MTERS = [
+            { id: "cuisine", name: "Cuisine", role: "Electronic Music Group", avatar: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=400" },
+            { id: "ter-cribbing", name: "'Ter-cribbing", role: "Urban Producer-Rapper", avatar: "https://images.unsplash.com/photo-1516280440614-37939bbacd81?auto=format&fit=crop&q=80&w=400" }
+        ];
+
+        const MTED = [
+            { id: "mitchell-grose", name: "Mitchell Grose", role: "Poet/Performer", avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=400" },
+            { id: "fancify-pigeon", name: "Fancify Pigeon", role: "Avian Simulation", avatar: "https://images.unsplash.com/photo-1506619216599-9d16d0903dfd?auto=format&fit=crop&q=80&w=400" }
+        ];
+
+        const WORKS_DATABASE = {
+            "cuisine": [
+                { 
+                    id: 'v1', title: 'Signals from the Void', type: 'Video', lore: 'A 15-minute visual journey through frequency-responsive environments.',
+                    content: 'https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?auto=format&fit=crop&q=80&w=1200'
+                },
+                { 
+                    id: 'w1', title: 'Concrete Rhythm', type: 'Audio', lore: 'Sonic exploration of industrial decay.',
+                    characters: [{ id: 'c1', name: 'Vortex Echo', role: 'Digital Entity', img: 'https://images.unsplash.com/photo-1614728263952-84ea256f9679?auto=format&fit=crop&q=80&w=800', details: 'A manifestation of signal noise.' }]
+                },
+                { 
+                    id: 'g1', title: 'Tree Climber', type: 'Game', lore: 'An 8-bit vertical climber. Avoid the falling fruit!',
+                    details: 'CONTROLS: Use Arrow Keys or the on-screen L/R joypads to navigate the player.',
+                    characters: [
+                        { 
+                            id: 'c3', 
+                            name: 'The Yellow Block', 
+                            role: 'Vertical Ascendant', 
+                            img: 'https://images.unsplash.com/photo-1550684848-fac1c5b4e853?auto=format&fit=crop&q=80&w=800', 
+                            details: 'A silent, geometric protagonist driven by an insatiable urge to ascend. Despite its simple form, it possesses remarkable agility and a mysterious resilience against gravity.',
+                            media: [
+                                { type: 'Art', content: 'ai_generated_moot_sample.jpg' },
+                                { type: 'Audio', content: 'sample_music_moot.mp3' }
+                            ]
+                        }
+                    ]
+                },
+                {
+                    id: 'w4', title: 'The Foundry Suite', type: 'Audio', 
+                    lore: 'A collection of industrial percussion and rhythmic textures.',
+                    details: 'SAMPLING NOTE: Sourced from 96kHz field recordings of the Detroit shipyards. Open for MT remixing.'
+                }
+            ],
+            "ter-cribbing": [
+                { 
+                    id: 'w2', title: 'Oceanic Static', type: 'Audio', lore: 'Wave-form synthesis and broadband interference.'
+                },
+                {
+                    id: 't1', title: 'The Wave Manual', type: 'Text', lore: 'A 40-page technical grimoire on deep sea signals.',
+                    content: 'Chapter 1: The Pressure of Sound. In the deep, every decibel weighs a ton...'
+                },
+                {
+                    id: 'i1', title: 'Deep Sea Sonar', type: 'Interactive', lore: 'A real-time reactive visualizer based on user input.',
+                    details: 'Move your cursor to pulse frequencies into the virtual ocean.'
+                },
+                {
+                    id: 'w6', title: 'Bring It On', type: 'Audio', 
+                    lore: 'A beeper and plucker sound to begin my career.',
+                    details: 'TECHNICAL DATA: a test beep, with a drumbeat and a guitar melody together.',
+                    characters: [{ id: 'c2', name: 'The Signalman', role: 'Data Guardian', img: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=800', details: 'A digital consciousness tasked with decoding corrupted deep-sea transmissions.' }],
+                    media: [
+                                { type: 'Audio', content: 'sample_music.mp3' }
+                    ]
+                }
+            ],
+            "mitchell-grose": [
+                { 
+                    id: 'w3', title: 'Mitchell Grose Poems', type: 'Text', 
+                    lore: '"Not like the brazen giant of Greek fame, With conquering limbs astride from land to land..." This foundational collection is available in the Store as a physical Hardback, digital PDF, and Audiobook.', 
+                    content: 'THE NEW COLOSSUS\n\nNot like the brazen giant of Greek fame,\nWith conquering limbs astride from land to land;\nHere at our sea-washed, sunset gates shall stand\nA mighty woman with a torch, whose flame\nIs the imprisoned lightning, and her name\nMother of Exiles. From her beacon-hand\nGlows world-wide welcome; her mild eyes command\nThe air-bridged harbor that twin cities frame.\n\n"Keep, ancient lands, your storied pomp!" cries she\nWith silent lips. "Give me your tired, your poor,\nYour huddled masses yearning to breathe free,\nThe wretched refuse of your teeming shore.\nSend these, the homeless, tempest-tost to me,\nI lift my lamp beside the golden door!"'
+                },
+                { id: 'f1', title: 'Architect Genesis', type: 'Film', lore: 'A cinematic rendering of the first structure.', content: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1200' },
+                {
+                    id: 'w8', title: 'Audible Anthology', type: 'Audio',
+                    lore: 'Raw vocal stems and spoken word performances for sonic interpretation.',
+                    details: 'Designed specifically for MTers to sample. Contains isolated verse from "The New Colossus".'
+                }
+            ],
+            "fancify-pigeon": [
+                { 
+                    id: 'g2', title: 'Fancify Pigeon (Core)', type: 'Game', 
+                    lore: 'The original source code and logic for the pigeon racing phenomenon.',
+                    content: 'CORE MODULE: PIGEON_FLIGHT_v1.0\nSTAMINA: 100\nVELOCITY: DYNAMIC\nNAV_LOG: ENABLED',
+                    media: [{ type: 'Art', content: 'https://images.unsplash.com/photo-1506619216599-9d16d0903dfd?auto=format&fit=crop&q=80&w=1200' }]
+                },
+                {
+                    id: 'w9', title: 'Urban Aviation', type: 'Art',
+                    lore: 'Visualizations of optimal flight paths through high-density urban canyons.',
+                    content: 'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?auto=format&fit=crop&q=80&w=1200'
+                }
+            ]
+        };
+
+        const NEWS_ITEMS = [
+            { 
+                id: 'n1', 
+                title: 'Phase 3: Hierarchical Logic', 
+                date: 'April 15, 2024', 
+                summary: 'Added nested project dependencies.', 
+                details: 'The mooters, mooteds and moots can now store sub-entities like characters and organizations within projects.',
+                media: [
+                    { type: 'Art', content: 'https://images.unsplash.com/photo-1614728263952-84ea256f9679?auto=format&fit=crop&q=80&w=1200' },
+                    { type: 'Video', content: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1200' },
+                    { type: 'Audio' }
+                ]
+            },
+            { 
+                id: 'n2', 
+                title: 'The Author Needs You', 
+                date: 'April 12, 2024', 
+                summary: 'Seeking collaboration for world-building.', 
+                details: 'I am looking for creative developers to help bridge the gap between lore and interaction.',
+                media: [{ type: 'Video', content: 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?auto=format&fit=crop&q=80&w=1200' }]
+            },
+            { 
+                id: 'n3', 
+                title: 'Signal: Oceanic Frequency', 
+                date: 'April 10, 2024', 
+                summary: 'New audio logs retrieved from the archive.', 
+                details: 'A mysterious signal has been decoded. Experience the raw audio transmission from the deep sea archives.',
+                media: [{ type: 'Audio' }]
+            }
+        ];
+
+        const STORE_DATABASE = {
+            physical: [
+                { id: 'p1', name: 'Mitchell Grose Poems (Book)', price: '$20', img: 'https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=800', details: 'A printed collection of original verse by Mitchell Grose.' },
+                { id: 'p2', name: 'Cuisine - Salad CD Album', price: '$15', img: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=800', details: 'The full-length Salad album on high-quality compact disc.' },
+                { id: 'p3', name: "\'Ter-Cribbing\'s Bring It On CD", price: '$12', img: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=800', details: 'Physical single CD featuring "Bring It On" and exclusive remixes.' },
+                { id: 'p4', name: '3Ms Novel #1', price: '$25', img: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=800', details: 'The first volume of the 3Ms novel series in softcover.' },
+                { id: 'p5', name: 'Fancify Pigeon (Cartridge)', price: '$45', img: 'https://images.unsplash.com/photo-1550745165-9bc0b252726f?auto=format&fit=crop&q=80&w=800', details: 'Physical game cartridge for the Fancify Pigeon interactive experience.' }
+            ],
+            digital: [
+                { id: 'd1', name: 'Fancify Pigeon (Digital)', price: '$15', img: 'https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&q=80&w=800', details: 'Instant download for the Fancify Pigeon video game.' },
+                { id: 'd2', name: 'Mitchell Grose Poems (PDF)', price: '$5', img: 'https://images.unsplash.com/photo-1512428559087-560fa5ceab42?auto=format&fit=crop&q=80&w=800', details: 'Digital anthology of Mitchell Grose\'s poetic works.' },
+                { id: 'd3', name: 'Cuisine - Salad Digital', price: '$10', img: 'https://images.unsplash.com/photo-1614613535308-eb5fbd3d2c17?auto=format&fit=crop&q=80&w=800', details: 'Full digital album in MP3 and WAV formats.' },
+                { id: 'd4', name: "\'Ter-Cribbing\'s Bring It On (FLAC)", price: '$7', img: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=800', details: 'Lossless FLAC digital single for maximum audio fidelity.' },
+                { id: 'd5', name: '3Ms Novel #1 Digital Bundle', price: '$15', img: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&q=80&w=800', details: 'Digital delivery of Novel #1 including PDF and EPUB files.' },
+                { id: 'd6', name: '3Ms Novel (Audiobook)', price: '$20', img: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=800', details: 'Full-length digital audiobook edition narrated by the author and New York Comedian Deandra Gone.' }
+            ]
+        };
+
+        const Nav = ({ setPage, currentPage }) => {
+            const [isOpen, setIsOpen] = useState(false);
+            const navItems = [
+                { id: 'home', label: 'Home', color: 'text-blue-300' },
+                { id: 'mters', label: 'Mooters', color: 'text-slate-500' },
+                { id: 'mts', label: 'Moots', color: 'text-amber-500' },
+                { id: 'mted', label: 'Mooteds', color: 'text-emerald-500' },
+                { id: 'news', label: 'News', color: 'text-blue-300' },
+                { id: 'store', label: 'Store', color: 'text-blue-300' },
+                { id: 'about', label: 'About', color: 'text-blue-300' },
+                { id: 'contact', label: 'Contact', color: 'text-blue-300' }
+            ];
+
+            const handleNavigate = (id) => {
+                setPage(id);
+                setIsOpen(false);
+                window.scrollTo(0, 0);
+            };
+
+            return (
+                <nav className="fixed top-0 w-full z-[100] border-b border-white/5 bg-slate-950/80 backdrop-blur-xl transition-all duration-500">
+                    <div className="h-20 flex items-center justify-between px-6 lg:px-10">
+                        <div className="flex items-center gap-4 cursor-pointer" onClick={() => handleNavigate('home')}>
+                            <img src="mooters_mooteds_moots-logo_no_title.svg" alt="Logo" className="h-8 lg:h-10 w-auto" />
+                        </div>
+                        <div className="hidden lg:flex items-center gap-8 text-[10px] font-black uppercase tracking-widest">
+                            {navItems.map(item => (
+                                <button key={item.id} onClick={() => handleNavigate(item.id)} className={currentPage === item.id ? 'nav-active' : item.color}>{item.label}</button>
+                            ))}
+                        </div>
+                        <button className="lg:hidden text-white p-2" onClick={() => setIsOpen(!isOpen)}>
+                            <Icon name={isOpen ? "X" : "Menu"} />
+                        </button>
+                    </div>
+                    <div className={`lg:hidden overflow-hidden transition-all duration-300 ease-in-out bg-slate-950/95 ${isOpen ? 'max-h-[500px] pb-10' : 'max-h-0'}`}>
+                        <div className="flex flex-col gap-6 px-10 text-[10px] font-black uppercase tracking-widest">
+                            {navItems.map(item => (
+                                <button key={item.id} onClick={() => handleNavigate(item.id)} className={`text-left ${currentPage === item.id ? 'text-white' : item.color}`}>{item.label}</button>
+                            ))}
+                        </div>
+                    </div>
+                </nav>
+            );
+        };
+
+        const Modal = ({ children, onClose }) => (
+            <div className="fixed inset-0 z-[300] modal-overlay overflow-y-auto">
+                <div className="min-h-screen flex flex-col items-center py-10 lg:py-20 px-4 lg:px-6">
+                    <button onClick={onClose} className="mb-6 lg:mb-10 flex items-center gap-4 text-white bg-white/5 px-6 lg:px-8 py-3 lg:py-4 rounded-full border border-white/10 hover:bg-white/10 transition-all">
+                        <Icon name="ArrowLeft" /><span className="font-black uppercase text-[8px] lg:text-[10px] tracking-widest">Return</span>
+                    </button>
+                    <div className="max-w-6xl w-full">{children}</div>
+                </div>
+            </div>
+        );
+
+        const Home = ({ setPage }) => (
+            <div className="min-h-screen bg-home flex flex-col items-center px-6 pt-40 pb-40 overflow-y-auto custom-scrollbar">
+                <div className="text-center mb-32">
+                    <h1 className="text-[9vw] font-black text-white leading-none mb-4 uppercase tracking-tighter">Mooters, Mooteds and Moots</h1>
+                    <p className="text-slate-400 text-lg font-medium tracking-[0.4em] uppercase">When contents get deployed, they can be modified. Like it?</p>
+                    <p className="text-slate-400 text-lg font-medium tracking-[0.4em] uppercase">Surprising music, poignant and compelling stories, remixes!</p>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full max-w-7xl">
+                    <HomeCard title="Mooters" subtitle="Creators of Moots remixing Mooteds' things" onClick={() => setPage('mters')} img="https://images.unsplash.com/photo-1598488035139-bdbb2231ce04" />
+                    <HomeCard title="Moots" subtitle="The Remixes of the original works" onClick={() => setPage('mts')} img="https://images.unsplash.com/photo-1460518451285-97b6aa326961" color="amber" />
+                    <HomeCard title="Mooteds" subtitle="The Original works that Moots derive from" onClick={() => setPage('mted')} img="https://images.unsplash.com/photo-1455390582262-044cdead277a" color="emerald" />
+                </div>
+
+                <div className="mt-48 w-full max-w-7xl">
+                    <h2 className="text-[10px] font-black text-white/30 uppercase tracking-[0.5em] mb-20 text-center">Featured Publications</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-20">
+                        <div className="group">
+                            <div className="aspect-[3/4] rounded-[2rem] overflow-hidden border border-white/10 mb-8 transition-all duration-700 group-hover:border-blue-500/30 group-hover:shadow-[0_0_50px_rgba(59,130,246,0.1)]">
+                                <img src="asampling.jpg" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110" />
+                            </div>
+                            <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Mooters: A Sampling...</h3>
+                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest leading-loose">Cuisine, the Electronic DJ group and 'Ter-Cribbing, the masked Urban producer and rapper's journies from obtaining sounds and 'Mooting' these sounds/content to get their message across. Tune into drama, music and changes between both.</p>
+                        </div>
+                        <div className="group">
+                            <div className="aspect-[3/4] rounded-[2rem] overflow-hidden border border-white/10 mb-8 transition-all duration-700 group-hover:border-amber-500/30 group-hover:shadow-[0_0_50px_rgba(245,158,11,0.1)]">
+                                <img src="decandyamir.jpg" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110" />
+                            </div>
+                            <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Moots: 'Playing with DeCandyAmir ...'</h3>
+                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest leading-loose">DeCandyAmir and others media editors - creates and spreads twisted narratives of series, people, objects and places, with WithTheFootage, he and his 'Moots' create narrative 'havoc' with his mates around the world. Are they good?</p>
+                        </div>
+                        <div className="group">
+                            <div className="aspect-[3/4] rounded-[2rem] overflow-hidden border border-white/10 mb-8 transition-all duration-700 group-hover:border-emerald-500/30 group-hover:shadow-[0_0_50px_rgba(16,185,129,0.1)]">
+                                <img src="https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=800" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-110" />
+                            </div>
+                            <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-4">Mooteds: Mitchell Grose's ...</h3>
+                            <p className="text-slate-500 text-[10px] font-black uppercase tracking-widest leading-loose">A teaching poet, Children's author and spoken performer realises his look-alikes all across the country gives undesirable perceptions of him. He better find out what, and why before everybody shuts him out.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="mt-48 w-full max-w-7xl bg-white/5 border border-white/10 rounded-[4rem] p-16 md:p-32 text-center backdrop-blur-sm relative overflow-hidden group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-1000" />
+                    <h2 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter mb-10 relative">Enter the Collective</h2>
+                    <p className="text-slate-400 text-xl font-light mb-16 max-w-2xl mx-auto leading-relaxed relative">
+                        Explore the collections for free, play interactive things, or support the vision by purchasing exclusive songs, art, stories, poetry, videos, and games at the Store.
+                    </p>
+                    <div className="flex flex-col md:flex-row gap-8 justify-center relative">
+                        <button onClick={() => setPage('store')} className="bg-white text-black px-16 py-6 rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] hover:bg-blue-500 hover:text-white transition-all shadow-2xl">Visit the Store</button>
+                        <button onClick={() => setPage('contact')} className="border border-white/20 text-white px-16 py-6 rounded-2xl font-black uppercase text-[10px] tracking-[0.3em] hover:bg-white/10 transition-all">Contact the Author</button>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const HomeCard = ({ title, subtitle, onClick, img, color = "slate" }) => (
+            <div onClick={onClick} className="group cursor-pointer relative h-[450px] overflow-hidden rounded-[3rem] border border-white/10">
+                <img src={img + "?auto=format&fit=crop&q=80&w=800"} className={`absolute inset-0 w-full h-full object-cover grayscale opacity-40 group-hover:opacity-100 group-hover:grayscale-0 transition-all duration-700 group-hover:scale-110`} />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+                <div className="absolute bottom-10 left-10">
+                    <h2 className={`text-5xl font-black uppercase tracking-tighter mb-2 ${color === 'amber' ? 'text-amber-500' : color === 'emerald' ? 'text-emerald-500' : 'text-white'}`}>{title}</h2>
+                    <p className="text-white/60 text-[10px] font-black uppercase tracking-[0.2em]">{subtitle}</p>
+                </div>
+            </div>
+        );
+
+        const SidebarLayout = ({ title, list, type, setDetail }) => {
+            const [activeId, setActiveId] = useState(list[0]?.id);
+            
+            useEffect(() => {
+                if (list.length > 0 && (!activeId || !list.find(item => item.id === activeId))) {
+                    setActiveId(list[0].id);
+                }
+            }, [list]);
+
+            const creator = useMemo(() => list.find(l => l.id === activeId) || list[0], [list, activeId]);
+            const works = creator ? (WORKS_DATABASE[creator.id] || []) : [];
+
+            const isMted = type === 'mted';
+            const theme = isMted ? {
+                bg: 'bg-[#06170c]',
+                accent: 'text-emerald-500',
+                border: 'hover:border-emerald-500/30',
+                sidebar: 'border-emerald-900/10',
+                active: 'bg-emerald-500/10 text-emerald-500'
+            } : {
+                bg: 'bg-[#0c0c0c]',
+                accent: 'text-zinc-400',
+                border: 'hover:border-zinc-400/30',
+                sidebar: 'border-zinc-900/20',
+                active: 'bg-zinc-500/10 text-zinc-100'
+            };
+
+            if (!creator) return <div className={`min-h-screen pt-20 ${theme.bg} flex items-center justify-center`}>Loading Archive...</div>;
+
+            return (
+                <div className={`min-h-screen pt-20 flex flex-col lg:flex-row ${theme.bg}`}>
+                    {/* Desktop Sidebar */}
+                    <aside className={`w-80 border-r ${theme.sidebar} p-10 hidden lg:block overflow-y-auto h-screen sticky top-0`}>
+                        <h2 className="text-[10px] font-black uppercase tracking-[0.3em] opacity-30 mb-10 text-white">{title}</h2>
+                        <div className="space-y-3">
+                            {list.map(item => (
+                                <SidebarItem key={item.id} item={item} isActive={activeId === item.id} onClick={() => setActiveId(item.id)} theme={theme} />
+                            ))}
+                        </div>
+                    </aside>
+                    {/* Mobile/Tablet Avatar Bar */}
+                    <div className="lg:hidden flex overflow-x-auto p-6 gap-6 no-scrollbar border-b border-white/5 bg-black/40 sticky top-20 z-[80]">
+                        {list.map(item => (
+                            <button key={item.id} onClick={() => setActiveId(item.id)} className={`flex-shrink-0 flex flex-col items-center gap-2 group`}>
+                                <img src={item.avatar} className={`w-14 h-14 rounded-2xl object-cover transition-all duration-300 ${activeId === item.id ? 'ring-2 ring-blue-500 scale-110 grayscale-0' : 'grayscale opacity-40'}`} />
+                                <span className={`text-[8px] font-black uppercase tracking-widest ${activeId === item.id ? 'text-white' : 'text-white/20'}`}>{item.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                    <main className="flex-1 p-6 lg:p-20">
+                        <div className="flex flex-col lg:flex-row items-center gap-6 lg:gap-10 mb-12 lg:mb-20 text-center lg:text-left">
+                            <img src={creator.avatar} className="w-32 lg:w-48 h-32 lg:h-48 rounded-[2.5rem] lg:rounded-[3.5rem] object-cover grayscale border-4 border-white/5 shadow-2xl" />
+                            <div>
+                                <h1 className="text-7xl font-black text-white mb-2 uppercase tracking-tighter">{creator.name}</h1>
+                                <p className={`${theme.accent} font-black uppercase tracking-[0.3em] text-xs`}>{creator.role}</p>
+                            </div>
+                        </div>
+                        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {works.map(work => (
+                                <div key={work.id} onClick={() => setDetail(work)} className={`bg-white/5 p-8 rounded-[3rem] group cursor-pointer border border-white/5 ${theme.border} transition-all flex flex-col justify-between h-64`}>
+                                    <div>
+                                        <div className="flex justify-between items-start mb-4">
+                                            <span className="text-[9px] font-black uppercase tracking-widest px-3 py-1 bg-white/5 rounded-full text-white/40">{work.type}</span>
+                                        </div>
+                                        <h3 className="text-2xl font-black text-white uppercase tracking-tighter leading-none">{work.title}</h3>
+                                    </div>
+                                    <p className="text-slate-500 text-[10px] uppercase font-black tracking-widest">Retrieve Artifact</p>
+                                </div>
+                            ))}
+                        </div>
+                    </main>
+                </div>
+            );
+        };
+
+        const SidebarItem = ({ item, isActive, onClick, theme }) => (
+            <button onClick={onClick} className={`w-full text-left p-6 rounded-[2rem] transition-all flex items-center gap-4 ${isActive ? `${theme.active} shadow-xl` : 'text-white/40 hover:text-white'}`}>
+                <img src={item.avatar} className="w-8 h-8 rounded-full object-cover grayscale" />
+                <span className="font-black text-xs uppercase tracking-widest">{item.name}</span>
+            </button>
+        );
+
+        const TreeClimber = () => {
+            const canvasRef = React.useRef(null);
+            const [gameState, setGameState] = useState('menu');
+            const [score, setScore] = useState(0);
+            const [ui, setUi] = useState({ title: 'TREE CLIMBER', sub: 'Avoid the fruit!', btn: 'START' });
+            const touchSide = React.useRef(null);
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                let state = 'menu';
+                let curScore = 0;
+                let speed = 3;
+                let frameCount = 0;
+                const treeW = 140;
+                const treeX = (canvas.width - treeW) / 2;
+                const player = { x: 185, y: 520, w: 30, h: 40, dx: 0, speed: 6 };
+                let fruits = [];
+                let audioCtx;
+
+                const playSfx = (f, type, d, v = 0.05) => {
+                    if (!audioCtx) return;
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.type = type;
+                    o.frequency.setValueAtTime(f, audioCtx.currentTime);
+                    g.gain.setValueAtTime(v, audioCtx.currentTime);
+                    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
+                    o.connect(g); g.connect(audioCtx.destination);
+                    o.start(); o.stop(audioCtx.currentTime + d);
+                };
+
+                const keys = {};
+                const kd = (e) => keys[e.code] = true;
+                const ku = (e) => keys[e.code] = false;
+                window.addEventListener('keydown', kd);
+                window.addEventListener('keyup', ku);
+
+                window._startGame = () => {
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    curScore = 0; setScore(0); speed = 3; frameCount = 0; fruits = [];
+                    player.x = 185; state = 'playing'; setGameState('playing');
+                };
+
+                const update = () => {
+                    if (state !== 'playing') return;
+                    frameCount++;
+                    player.dx = 0;
+                    if (keys['ArrowLeft'] || touchSide.current === 'left') player.dx = -player.speed;
+                    if (keys['ArrowRight'] || touchSide.current === 'right') player.dx = player.speed;
+                    player.x += player.dx;
+                    if (player.dx !== 0 && frameCount % 12 === 0) {
+                        playSfx(400 + Math.random() * 50, 'sine', 0.05, 0.02);
+                    }
+
+                    player.x = Math.max(treeX, Math.min(player.x, treeX + treeW - player.w));
+                    if (frameCount % 60 === 0) { 
+                        curScore++; setScore(curScore); 
+                        playSfx(800 + Math.random() * 40, 'triangle', 0.1, 0.03);
+                    }
+                    if (frameCount % 600 === 0) speed += 0.5;
+                    if (frameCount % Math.max(20, 50 - Math.floor(curScore/10)) === 0) {
+                        fruits.push({ x: treeX + Math.random()*(treeW-20), y: -20, r: 10 + Math.random()*10 });
+                    }
+                    for (let i = fruits.length - 1; i >= 0; i--) {
+                        fruits[i].y += speed + 2;
+                        let f = fruits[i];
+                        if (f.x < player.x + player.w && f.x + f.r > player.x && f.y < player.y + player.h && f.y + f.r > player.y) {
+                            state = 'over'; setGameState('over');
+                            playSfx(60, 'sawtooth', 0.8, 0.15);
+                            setUi({ title: 'GAME OVER', sub: `${curScore} meters climbed`, btn: 'RETRY' });
+                        }
+                        if (f.y > 600) fruits.splice(i, 1);
+                    }
+                };
+
+                const draw = () => {
+                    ctx.fillStyle = '#87CEEB'; ctx.fillRect(0, 0, 400, 600);
+                    ctx.fillStyle = '#5D4037'; ctx.fillRect(treeX, 0, treeW, 600);
+                    ctx.fillStyle = '#4E342E'; ctx.fillRect(treeX + 20, 0, 8, 600); ctx.fillRect(treeX + 110, 0, 8, 600);
+                    ctx.fillStyle = '#FFEB3B'; ctx.fillRect(player.x, player.y, player.w, player.h);
+                    ctx.fillStyle = '#000'; ctx.fillRect(player.x+5, player.y+8, 5, 5); ctx.fillRect(player.x+20, player.y+8, 5, 5);
+                    ctx.fillStyle = '#F44336'; fruits.forEach(f => { ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI*2); ctx.fill(); });
+                    requestAnimationFrame(draw);
+                };
+
+                const tick = setInterval(update, 1000/60);
+                const anim = requestAnimationFrame(draw);
+                return () => { clearInterval(tick); cancelAnimationFrame(anim); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); delete window._startGame; };
+            }, []);
+
+            return (
+                <div className="relative w-full h-full bg-sky-400 font-mono overflow-hidden">
+                    <canvas ref={canvasRef} width="400" height="600" className="w-full h-full object-contain" />
+                    {gameState !== 'playing' && (
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-6 text-center">
+                            <h2 className="text-white text-4xl font-black mb-2 uppercase">{ui.title}</h2>
+                            <p className="text-white/70 mb-8 uppercase text-xs tracking-widest">{ui.sub}</p>
+                            <button onClick={() => window._startGame?.()} className="bg-emerald-500 border-4 border-white text-white px-10 py-4 font-black hover:bg-emerald-600 transition-all">
+                                {ui.btn}
+                            </button>
+                        </div>
+                    )}
+                    {gameState === 'playing' && (
+                        <>
+                            <div className="absolute top-8 left-8 text-white text-3xl font-black drop-shadow-lg">{score}m</div>
+                            <div className="absolute bottom-10 left-0 right-0 flex justify-between px-10 pointer-events-none">
+                                <div onMouseDown={() => touchSide.current = 'left'} onMouseUp={() => touchSide.current = null} onTouchStart={(e) => { e.preventDefault(); touchSide.current = 'left'; }} onTouchEnd={() => touchSide.current = null} className="w-20 h-20 bg-white/20 border-4 border-white/40 rounded-full flex items-center justify-center text-white font-black pointer-events-auto active:bg-white/40 cursor-pointer select-none">L</div>
+                                <div onMouseDown={() => touchSide.current = 'right'} onMouseUp={() => touchSide.current = null} onTouchStart={(e) => { e.preventDefault(); touchSide.current = 'right'; }} onTouchEnd={() => touchSide.current = null} className="w-20 h-20 bg-white/20 border-4 border-white/40 rounded-full flex items-center justify-center text-white font-black pointer-events-auto active:bg-white/40 cursor-pointer select-none">R</div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            );
+        };
+
+        const PigeonSimulator = () => {
+            const canvasRef = React.useRef(null);
+            const [status, setStatus] = useState('menu');
+            const [results, setResults] = useState(null);
+            const stats = React.useRef({ speed: 0, alt: 0, windSpd: 0, windDir: 0, totalSpeed: 0, frames: 0 });
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                let animFrame;
+                let startTime;
+                const duration = 30000; // 30 seconds
+                const logicalSize = 100; // 100 logical units
+                const scale = 400 / logicalSize; // Map to 400px canvas
+
+                const birdClasses = [
+                    { type: 'Scout', speedBase: 0.08, alt: 150, color: '#10b981' },
+                    { type: 'Heavy', speedBase: 0.04, alt: 80, color: '#f43f5e' },
+                    { type: 'Messenger', speedBase: 0.06, alt: 120, color: '#f59e0b' }
+                ];
+
+                const startPos = { x: Math.random() * logicalSize, y: Math.random() * logicalSize };
+
+                const birds = Array.from({ length: 10 }, (_, i) => ({
+                    id: i,
+                    class: birdClasses[i % 3], // Cycles through Scout, Heavy, Messenger
+                    x: startPos.x,
+                    y: startPos.y,
+                    targetX: Math.random() * logicalSize,
+                    targetY: Math.random() * logicalSize,
+                    finished: false,
+                    totalSpeed: 0,
+                    frameCount: 0
+                }));
+
+                const scenery = Array.from({ length: 12 }, () => ({
+                    x: Math.random() * logicalSize,
+                    y: Math.random() * logicalSize,
+                    type: Math.random() > 0.5 ? 'building' : 'tree',
+                    size: 2 + Math.random() * 4,
+                    height: 50 + Math.floor(Math.random() * 150)
+                }));
+
+                // Wind Grid
+                const windField = Array.from({ length: 5 }, () => 
+                    Array.from({ length: 5 }, () => ({
+                        angle: Math.random() * Math.PI * 2,
+                        strength: 0.2 + Math.random() * 0.8
+                    }))
+                );
+
+                const getWind = (x, y) => {
+                    const gx = Math.min(4, Math.max(0, Math.floor(x / 20)));
+                    const gy = Math.min(4, Math.max(0, Math.floor(y / 20)));
+                    return windField[gx][gy];
+                };
+
+                const loop = (now) => {
+                    if (!startTime) startTime = now;
+                    const elapsed = now - startTime;
+                    const progress = Math.min(elapsed / duration, 1);
+
+                    ctx.clearRect(0, 0, 400, 400);
+                    ctx.fillStyle = '#020617'; // Square map background
+                    ctx.fillRect(0, 0, 400, 400);
+                    ctx.strokeStyle = '#1e293b';
+                    ctx.strokeRect(0, 0, 400, 400);
+
+                    // Draw Wind Tracker Grid
+                    for(let i=0; i<5; i++) {
+                        for(let j=0; j<5; j++) {
+                            const w = windField[i][j];
+                            const cx = (i * 20 + 10) * scale;
+                            const cy = (j * 20 + 10) * scale;
+                            ctx.beginPath();
+                            ctx.strokeStyle = '#1e293b';
+                            ctx.moveTo(cx, cy);
+                            ctx.lineTo(cx + Math.cos(w.angle) * 8, cy + Math.sin(w.angle) * 8);
+                            ctx.stroke();
+                        }
+                    }
+
+                    scenery.forEach(s => {
+                        ctx.strokeStyle = s.type === 'building' ? '#475569' : '#065f46';
+                        if(s.type === 'building') {
+                            ctx.strokeRect((s.x - s.size/2) * scale, (s.y - s.size/2) * scale, s.size * scale, s.size * scale);
+                        } else {
+                            ctx.beginPath(); ctx.arc(s.x * scale, s.y * scale, (s.size/2) * scale, 0, Math.PI*2); ctx.stroke();
+                        }
+                    });
+
+                    // Draw Destinations as dots
+                    birds.forEach(b => {
+                        ctx.fillStyle = b.class.color;
+                        ctx.beginPath();
+                        ctx.arc(b.targetX * scale, b.targetY * scale, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = b.class.color;
+                        ctx.strokeRect((b.targetX - 2) * scale, (b.targetY - 2) * scale, 4 * scale, 4 * scale);
+                    });
+
+                    // Departure Point Symbol
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect((startPos.x - 2) * scale, (startPos.y - 2) * scale, 4 * scale, 4 * scale);
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.strokeRect((startPos.x - 3) * scale, (startPos.y - 3) * scale, 6 * scale, 6 * scale);
+
+                    let avgSpeedSum = 0;
+                    birds.forEach(b => {
+                        if (b.finished) return;
+
+                        const wind = getWind(b.x, b.y);
+                        const angleToTarget = Math.atan2(b.targetY - b.y, b.targetX - b.x);
+                        
+                        const baseStep = b.class.speedBase;
+                        const vx = Math.cos(angleToTarget) * baseStep + Math.cos(wind.angle) * wind.strength * 0.05;
+                        const vy = Math.sin(angleToTarget) * baseStep + Math.sin(wind.angle) * wind.strength * 0.05;
+
+                        b.x += vx;
+                        b.y += vy;
+
+                        b.totalSpeed += baseStep;
+                        b.frameCount++;
+
+                        const dist = Math.hypot(b.targetX - b.x, b.targetY - b.y);
+                        if (dist < 1) b.finished = true;
+
+                        ctx.save();
+                        ctx.translate(b.x * scale, b.y * scale);
+                        ctx.rotate(angleToTarget);
+                        ctx.fillStyle = b.class.color;
+                        ctx.beginPath();
+                        ctx.moveTo(6, 0); ctx.lineTo(-4, -4); ctx.lineTo(-4, 4);
+                        ctx.fill();
+                        ctx.restore();
+
+                        avgSpeedSum += baseStep;
+                    });
+
+                    const currentWind = getWind(birds[0].x, birds[0].y);
+                    stats.current.speed = avgSpeedSum / 10;
+                    stats.current.alt = progress < 0.5 ? progress * 2 * birds[0].class.alt : (1 - progress) * 2 * birds[0].class.alt;
+                    stats.current.windSpd = currentWind.strength * 10;
+                    stats.current.frames++;
+
+                    // Enhanced HUD
+                    ctx.fillStyle = '#10b981';
+                    ctx.font = '10px monospace';
+                    ctx.fillText(`AVG VELOCITY: ${stats.current.speed.toFixed(4)}`, 20, 30);
+                    ctx.fillText(`WIND FORCE: ${stats.current.windSpd.toFixed(4)}`, 20, 45);
+                    ctx.fillText(`MAP MODE: 2D TOP-DOWN`, 280, 30);
+
+                    ctx.fillRect(20, 380, progress * 360, 2);
+
+                    if (progress < 1) {
+                        animFrame = requestAnimationFrame(loop);
+                    } else {
+                        const birdStats = birds.map(b => ({
+                            id: b.id + 1,
+                            type: b.class.type,
+                            avgSpeed: b.frameCount > 0 ? (b.totalSpeed / b.frameCount).toFixed(4) : "0.00",
+                            finished: b.finished
+                        }));
+                        setResults(birdStats);
+                        setStatus('finished');
+                    }
+                };
+
+                if (status === 'playing') animFrame = requestAnimationFrame(loop);
+                return () => cancelAnimationFrame(animFrame);
+            }, [status]);
+
+            return (
+                <div className="relative w-full h-full bg-slate-950 overflow-hidden rounded-[3rem]">
+                    <canvas ref={canvasRef} width="400" height="400" className="w-full h-full" />
+                    {status === 'menu' && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 p-10 text-center">
+                            <h2 className="text-emerald-500 text-3xl font-black mb-4 tracking-tighter uppercase">Pigeon Simulator v1.0</h2>
+                            <p className="text-white/50 text-xs mb-8 uppercase tracking-widest leading-loose">Automated trajectory test.<br/>Destination: Sector 7G Archive.</p>
+                            <button onClick={() => setStatus('playing')} className="bg-emerald-600 text-white px-8 py-3 font-black uppercase text-xs tracking-widest rounded-full">Initiate Flight</button>
+                        </div>
+                    )}
+                    {status === 'finished' && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-emerald-950/95 p-6 text-center overflow-y-auto custom-scrollbar">
+                            <h2 className="text-white text-3xl font-black mb-4 uppercase tracking-tighter">Flight Manifest</h2>
+                            <div className="w-full max-w-md space-y-2 mb-8">
+                                <div className="flex justify-between text-[10px] font-black uppercase text-emerald-400 border-b border-white/10 pb-2">
+                                    <span>Bird</span>
+                                    <span>Class</span>
+                                    <span>Avg Vel</span>
+                                    <span>Status</span>
+                                </div>
+                                {results && results.map(b => (
+                                    <div key={b.id} className="flex justify-between text-[11px] font-mono text-white/80 border-b border-white/5 py-1">
+                                        <span>#{b.id}</span>
+                                        <span>{b.type}</span>
+                                        <span>{b.avgSpeed}</span>
+                                        <span className={b.finished ? "text-emerald-400" : "text-rose-500"}>
+                                            {b.finished ? "ARRIVED" : "MIA"}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                            <button onClick={() => { setStatus('menu'); setResults(null); }} className="border border-white/20 text-white px-8 py-3 font-black uppercase text-xs tracking-widest rounded-full hover:bg-white/10">Reboot Sim</button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const WorkDetail = ({ work }) => {
+            const isGame = work.id === 'g1' || work.id === 'g2';
+            return (
+                <div className={isGame ? "flex flex-col gap-12" : "grid lg:grid-cols-2 gap-20"}>
+                    <div className={`${isGame ? "w-full h-[500px] md:h-[600px]" : "aspect-square"} bg-slate-900 rounded-[4rem] border border-white/10 flex items-center justify-center overflow-hidden shadow-2xl relative`}>
+                    {!isGame && <div className="w-full h-full overflow-y-auto p-4 custom-scrollbar">
+                        <div className="flex flex-col gap-4">
+                            {(work.media || (work.content || work.type === 'Audio' ? [{ type: work.type, content: work.content }] : [])).map((m, i) => (
+                                <div key={i} className="w-full aspect-video rounded-3xl overflow-hidden border border-white/5 bg-black/20 relative shrink-0">
+                                    {(m.type === 'Art' || m.type === 'Video' || m.type === 'Film') && m.content && (
+                                        <div className="w-full h-full relative group">
+                                            <img src={m.content} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700" />
+                                            {(m.type === 'Video' || m.type === 'Film') && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                                    <Icon name="Play" className="w-12 h-12 text-white" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    {m.type === 'Audio' && (
+                                        <div className="w-full h-full flex flex-col items-center justify-center p-8 bg-blue-500/5">
+                                            <div className="flex gap-1 items-end h-12 mb-6">
+                                                {[...Array(15)].map((_, j) => (
+                                                    <div key={j} className="bar bg-blue-500" style={{ animationDelay: `${j * 0.05}s` }}></div>
+                                                ))}
+                                            </div>
+                                            <audio controls src={m.content} className="w-full max-w-xs h-8 opacity-40 hover:opacity-100 transition-opacity" />
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </div>}
+                    {work.type === 'Text' && (
+                        <div className="p-20 overflow-y-auto w-full h-full bg-black/40">
+                            <pre className="whitespace-pre-wrap text-white font-mono text-sm leading-relaxed opacity-60 uppercase">{work.content}</pre>
+                        </div>
+                    )}
+                    {work.id === 'g1' && <TreeClimber />}
+                    {work.id === 'g2' && <PigeonSimulator />}
+                    {work.type === 'Interactive' && (
+                        <div className="w-full h-full flex items-center justify-center p-10 text-center">
+                            <div className="animate-pulse space-y-4">
+                                <Icon name="Cpu" className="w-20 h-20 text-blue-500 mx-auto" />
+                                <p className="text-white font-black uppercase tracking-widest text-xs">Interactive Node Ready</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
+                    <div className={isGame ? "max-w-4xl mx-auto w-full" : ""}>
+                        <h1 className="text-6xl font-black text-white mb-6 uppercase tracking-tighter leading-none">{work.title}</h1>
+                        <p className="text-slate-400 text-xl font-light mb-12 leading-relaxed">{work.lore}</p>
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="bg-white/5 p-6 rounded-3xl text-center">
+                                <h4 className="text-[10px] font-black uppercase text-blue-400 mb-1">Status</h4>
+                                <p className="text-white font-black text-sm uppercase">Active</p>
+                            </div>
+                            <div className="bg-white/5 p-6 rounded-3xl text-center">
+                                <h4 className="text-[10px] font-black uppercase text-blue-400 mb-1">Format</h4>
+                                <p className="text-white font-black text-sm uppercase">{work.type}</p>
+                            </div>
+                        </div>
+                        {work.details && (
+                            <div className="mt-8 p-8 bg-blue-500/5 border border-blue-500/10 rounded-3xl">
+                                <h4 className="text-[10px] font-black text-blue-500 uppercase tracking-widest mb-4">Functional Requirements</h4>
+                                <p className="text-sm text-slate-400 font-mono">{work.details}</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        };
+
+        const NewsPage = ({ setDetail }) => {
+            const [email, setEmail] = useState('');
+            const [subscribed, setSubscribed] = useState(false);
+
+            return (
+                <div className="min-h-screen pt-40 px-10 pb-20 bg-slate-950">
+                    <div className="max-w-5xl mx-auto">
+                        <div className="flex justify-between items-end mb-20">
+                            <h1 className="text-8xl font-black text-white uppercase tracking-tighter">News</h1>
+                            <div className="max-w-xs w-full">
+                                {subscribed ? (
+                                    <div className="text-emerald-500 font-black uppercase text-xs tracking-widest text-right">Subscribed</div>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <input 
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder="newsletter@mootersmootedsmoots.canon" 
+                                            className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-[10px] font-mono text-white flex-1 focus:outline-none focus:border-blue-500" 
+                                        />
+                                        <button onClick={() => setSubscribed(true)} className="bg-white text-black px-6 py-3 rounded-xl font-black text-[10px] uppercase">Join</button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                        <div className="space-y-6">
+                            {NEWS_ITEMS.map(item => (
+                                <div key={item.id} onClick={() => setDetail(item)} className="p-12 bg-slate-900 rounded-[3rem] border border-white/5 hover:bg-slate-800 transition-all cursor-pointer group flex gap-8 justify-between items-center">
+                                    <div className="flex-1">
+                                        <span className="text-[10px] font-black text-blue-400 mb-2 block uppercase">{item.date}</span>
+                                        <h3 className="text-4xl font-black text-white uppercase tracking-tighter mb-2 leading-none">{item.title}</h3>
+                                        <p className="text-slate-500 text-xs font-black uppercase tracking-widest opacity-60">{item.summary}</p>
+                                    </div>
+                                    <Icon name="ChevronRight" className="w-8 h-8 opacity-0 group-hover:opacity-100 transition-all text-blue-400" />
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const StorePage = ({ setDetail }) => (
+            <div className="min-h-screen pt-40 px-6 md:px-10 pb-20 bg-slate-950">
+                <div className="max-w-7xl mx-auto">
+                    <div className="mb-24">
+                        <h1 className="text-8xl font-black text-white mb-2 uppercase tracking-tighter">Store</h1>
+                        <p className="text-slate-500 font-black uppercase tracking-widest text-xs">Whatever you fancy, </p>
+                    </div>
+
+                    <div className="mb-20">
+                        <div className="flex items-center gap-6 mb-12">
+                            <h2 className="text-2xl font-black text-white uppercase tracking-widest">Physicals</h2>
+                            <div className="h-px flex-1 bg-white/5" />
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+                            {STORE_DATABASE.physical.map(item => (
+                                <div key={item.id} onClick={() => setDetail(item)} className="group cursor-pointer">
+                                    <img src={item.img} className="aspect-square rounded-[2.5rem] object-cover border border-white/10 group-hover:scale-105 transition-all duration-700 mb-6 grayscale hover:grayscale-0" />
+                                    <h3 className="text-xl font-black text-white uppercase tracking-tighter">{item.name}</h3>
+                                    <p className="text-blue-400 font-black">{item.price}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="flex items-center gap-6 mb-12">
+                            <h2 className="text-2xl font-black text-white uppercase tracking-widest">Digitals</h2>
+                            <div className="h-px flex-1 bg-white/5" />
+                        </div>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8">
+                            {STORE_DATABASE.digital.map(item => (
+                                <div key={item.id} onClick={() => setDetail(item)} className="group cursor-pointer">
+                                    <div className="relative aspect-square rounded-[2.5rem] overflow-hidden border border-white/10 mb-6">
+                                        <img src={item.img} className="w-full h-full object-cover grayscale group-hover:grayscale-0 group-hover:scale-105 transition-all duration-700" />
+                                        <div className="absolute top-4 right-4 bg-white text-black px-3 py-1 rounded-full text-[8px] font-black uppercase">Instant Access</div>
+                                    </div>
+                                    <h3 className="text-xl font-black text-white uppercase tracking-tighter">{item.name}</h3>
+                                    <p className="text-blue-400 font-black">{item.price}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const StoreDetail = ({ item }) => (
+            <div className="grid md:grid-cols-2 gap-20">
+                <img src={item.img} className="aspect-square rounded-[3rem] object-cover grayscale shadow-2xl" />
+                <div className="flex flex-col justify-center">
+                    <h1 className="text-6xl font-black text-white uppercase mb-4 tracking-tighter leading-none">{item.name}</h1>
+                    <p className="text-2xl text-blue-400 mb-8 font-bold">{item.price}</p>
+                    <div className="mb-12">
+                        <h4 className="text-[10px] font-black text-white/30 uppercase tracking-[0.3em] mb-4">Specifications</h4>
+                        <p className="text-slate-400 text-lg font-light leading-relaxed">{item.details}</p>
+                    </div>
+                    <button className="bg-white text-black py-5 rounded-2xl font-black uppercase tracking-widest text-[10px] hover:bg-blue-500 hover:text-white transition-all">Secure Shipment</button>
+                </div>
+            </div>
+        );
+
+        const ContactPage = () => (
+            <div className="min-h-screen pt-40 px-10 pb-20 bg-slate-950 flex flex-col items-center">
+                <div className="max-w-4xl text-center">
+                    <h1 className="text-8xl font-black text-white mb-10 uppercase tracking-tighter">Contact J. Soon Livan</h1>
+                    <p className="text-xl text-slate-400 mb-12 font-light leading-relaxed">
+                        Secure communication channels for professional inquiries, collaborative ventures, and structural support.
+                    </p>
+
+                    <div className="mb-20 p-10 bg-blue-500/5 border border-blue-500/10 rounded-[3rem]">
+                        <h3 className="text-blue-500 font-black uppercase text-[10px] tracking-[0.4em] mb-4">Strategic Collaboration</h3>
+                        <p className="text-slate-300 text-lg font-light leading-relaxed">
+                            The archive is entering its next phase. Any support or expertise in <span className="text-white font-medium underline decoration-blue-500/50">Publication</span>, <span className="text-white font-medium underline decoration-blue-500/50">Marketing</span>, <span className="text-white font-medium underline decoration-blue-500/50">Distribution</span>, and <span className="text-white font-medium underline decoration-blue-500/50">License Clearance</span> would be highly appreciated.
+                        </p>
+                    </div>
+
+                    <div className="grid md:grid-cols-3 gap-8 w-full">
+                        <div className="bg-slate-900 p-12 rounded-[3.5rem] border border-white/5">
+                            <Icon name="Mail" className="w-12 h-12 text-blue-400 mx-auto mb-6" />
+                            <h3 className="text-xl font-black text-white uppercase mb-2">Email</h3>
+                            <p className="text-slate-500 font-mono text-sm">joeliuprimary@gmail.com</p>
+                        </div>
+                        <div className="bg-slate-900 p-12 rounded-[3.5rem] border border-white/5">
+                            <Icon name="" className="w-12 h-12 text-blue-400 mx-auto mb-6" />
+                            <h3 className="text-xl font-black text-white uppercase mb-2">Linktree</h3>
+                            <p className="text-slate-500 font-mono text-sm">linktr.ee/lj_leftcreations</p>
+                        </div>
+                        <div className="bg-slate-900 p-12 rounded-[3.5rem] border border-white/5">
+                            <Icon name="Phone" className="w-12 h-12 text-blue-400 mx-auto mb-6" />
+                            <h3 className="text-xl font-black text-white uppercase mb-2">Whatsapp</h3>
+                            <p className="text-slate-500 font-mono text-sm">+44 7920574835</p>
+                        </div>
+                    </div>
+                    
+                    <div className="mt-20 flex flex-wrap justify-center gap-12 border-t border-white/5 pt-20">
+                        <a href="#" className="flex items-center gap-4 text-white/40 hover:text-white transition-all">
+                            <Icon name="Instagram" className="w-6 h-6" />
+                            <span className="font-black text-xs uppercase tracking-widest">Coming Soon</span>
+                        </a>
+                        <a href="#" className="flex items-center gap-4 text-white/40 hover:text-white transition-all">
+                            <Icon name="YouTube" className="w-6 h-6" />
+                            <span className="font-black text-xs uppercase tracking-widest">Coming Soon</span>
+                        </a>
+                        <a href="#" className="flex items-center gap-4 text-white/40 hover:text-white transition-all">
+                            <Icon name="TikTok" className="w-6 h-6" />
+                            <span className="font-black text-xs uppercase tracking-widest">Coming Soon</span>
+                        </a>
+                        <a href="#" className="flex items-center gap-4 text-white/40 hover:text-white transition-all">
+                            <Icon name="Facebook" className="w-6 h-6" />
+                            <span className="font-black text-xs uppercase tracking-widest">Coming Soon</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const AboutPage = () => (
+            <div className="min-h-screen pt-40 px-10 pb-20 bg-slate-950">
+                <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-20 items-center">
+                    <div>
+                        <h1 className="text-8xl font-black text-white mb-10 uppercase tracking-tighter">About Mooters, Mooteds and Moots</h1>
+                        <p className="text-xl text-slate-400 leading-relaxed font-light mb-12">
+                            Mooters, Mooteds and Moots is an urban science-supernatural 11 novel series with 3 distinct arcs following three different groups, written by J. Soon Livan, the pen name of Joseph Liu.
+                        </p>
+                        <p className="text-xl text-slate-400 leading-relaxed font-light mb-12">
+                            <b>1. Mitchell Grose's ...</b>A teaching poet, Children's author and spoken performer realises his look-alikes all across the country gives undesirable perceptions of him. He better find out what, and why before everybody shuts him out.
+                        </p>
+                        <p className="text-xl text-slate-400 leading-relaxed font-light mb-12">
+                            <b>2. Playing with DeCandyAmir...</b>creates and spreads twisted narratives of series, people, objects and places, with WithTheFootage, he and his 'Moots' create narrative 'havoc' with his mates around the world.
+                        </p>
+                         <p className="text-xl text-slate-400 leading-relaxed font-light mb-12">
+                            <b>3. A Sampling...</b> Cuisine, the Electronic DJ group and 'Ter-Cribbing, the masked Urban producer and rapper's journies from obtaining sounds and 'Mooting' these sounds/content to get their message across. However, both have heat, legally and criminally.
+                        </p>
+                        <p className="text-xl text-slate-400 leading-relaxed font-light mb-12">
+                            <b>3A. Cuisine</b> - Electronic Musician, first creating music with obscure media nobody wants to find out anymore, bring them recognition and these media to the world. A collaboration with 'Ter-Cribbing leads to a new album, a new perspective, and new outlooks at people.
+                        </p>
+                        <p className="text-xl text-slate-400 leading-relaxed font-light mb-12">
+                            <b>3B. 'Ter-Cribbing</b> - Urban Producer and Rapper, 'Mooting' sounds and content to create music with a message. With the help of Cuisine, he creates a new album that brings new perspectives and outlooks at people, but also brings heat to him legally and criminally. Could he pass the heat?
+                        </p>
+                        <p className="text-xl text-slate-400 leading-relaxed font-light mb-12">
+                            There are also supplementary content and publications to go along with the novel series, including Cuisine and 'Ter-Cribbing's Music Albums, Mitchell Grose's poetry and written stories, video games, films, graphic novels and audiobooks and more to support.
+                        </p>
+                        <p className="text-xl text-slate-400 leading-relaxed font-light mb-12">
+                           With such an ambitious series that will introduce bring new series and entertainment to the world, if you would like to support me, then follow on social media or contact me.
+                        </p>
+                    </div>
+                    <div className="group relative bg-white/5 h-[600px] rounded-[4rem] border border-white/10 overflow-hidden transition-all duration-700 hover:border-blue-500/30 hover:shadow-[0_0_50px_rgba(59,130,246,0.1)]">
+                         <img src="jl_image.jpg" className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-1000 group-hover:scale-105" alt="Author Portrait" />
+                         <p className="absolute bottom-8 left-8 bg-slate-950/80 backdrop-blur-md border border-white/10 px-6 py-3 rounded-2xl text-white/70 text-[10px] font-black uppercase tracking-[0.2em] opacity-0 group-hover:opacity-100 transition-all duration-500">Author Portrait - J. Soon Livan (Joseph Liu)</p>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const LoadingScreen = () => (
+            <div className="fixed inset-0 z-[1000] bg-slate-950 flex items-center justify-center overflow-hidden">
+                <div className="relative w-full h-full flex items-center justify-center">
+                    {/* Single Image Notebook Flip Reveal */}
+                    <div className="anim-notebook-reveal opacity-0">
+                        <img 
+                            src="mooters_mooteds_moots-logo_no_title.svg" 
+                            className="w-64 h-auto object-contain" 
+                            alt="Mooters, Mooteds and Moots - Logo" 
+                        />
+                    </div>
+                </div>
+            </div>
+        );
+
+        const App = () => {
+            const [currentPage, setPage] = useState('home');
+            const [isLoading, setIsLoading] = useState(true);
+            const [selectedWork, setSelectedWork] = useState(null);
+            const [selectedNews, setSelectedNews] = useState(null);
+            const [selectedStore, setSelectedStore] = useState(null);
+
+            useEffect(() => {
+                const timer = setTimeout(() => setIsLoading(false), 2000);
+                return () => clearTimeout(timer);
+            }, []);
+
+            const renderContent = () => {
+                switch(currentPage) {
+                    case 'home': return <Home setPage={setPage} />;
+                    case 'mters': return <SidebarLayout title="CREATORS" list={MTERS} type="mters" setDetail={setSelectedWork} />;
+                    case 'mted': return <SidebarLayout title="ORIGINS" list={MTED} type="mted" setDetail={setSelectedWork} />;
+                    case 'mts': return <MootsPage />;
+                    case 'news': return <NewsPage setDetail={setSelectedNews} />;
+                    case 'store': return <StorePage setDetail={setSelectedStore} />;
+                    case 'about': return <AboutPage />;
+                    case 'contact': return <ContactPage />;
+                    default: return <Home setPage={setPage} />;
+                }
+            };
+
+            return (
+                <div>
+                    {isLoading ? (
+                        <LoadingScreen />
+                    ) : (
+                        <>
+                            <Nav setPage={setPage} currentPage={currentPage} />
+                            {selectedWork && (
+                                <Modal onClose={() => setSelectedWork(null)}>
+                                    <WorkDetail work={selectedWork} />
+                                </Modal>
+                            )}
+                            {selectedNews && (
+                                <Modal onClose={() => setSelectedNews(null)}>
+                                    <NewsDetail news={selectedNews} />
+                                </Modal>
+                            )}
+                            {selectedStore && (
+                                <Modal onClose={() => setSelectedStore(null)}>
+                                    <StoreDetail item={selectedStore} />
+                                </Modal>
+                            )}
+                            {renderContent()}
+                        </>
+                    )}
+                </div>
+            );
+        };
+
+        const NewsDetail = ({ news }) => (
+            <div className="bg-slate-900 p-12 md:p-20 rounded-[4rem] max-w-4xl mx-auto border border-white/10 shadow-2xl">
+                <div className="flex flex-col gap-12">
+                    {news.media && news.media.length > 0 && (
+                        <div className="flex flex-col gap-6">
+                            {news.media.map((m, idx) => (
+                                <div key={idx} className="w-full aspect-video rounded-[3rem] overflow-hidden border border-white/10 bg-black/20 relative">
+                                    {(m.type === 'Art' || m.type === 'Video') && (
+                                        <div className="w-full h-full relative group">
+                                            <img src={m.content} className="w-full h-full object-cover grayscale" />
+                                            {m.type === 'Video' && (
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                                    <Icon name="Play" className="w-16 h-16 text-white" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                    {m.type === 'Audio' && (
+                                        <div className="w-full h-full flex flex-col items-center justify-center p-10">
+                                            <div className="flex gap-1.5 items-end h-16 mb-8">
+                                                {[...Array(15)].map((_, i) => (
+                                                    <div key={i} className="bar bg-blue-500" style={{ animationDelay: `${i * 0.05}s` }}></div>
+                                                ))}
+                                            </div>
+                                            <audio controls src={m.content} className="w-full max-w-sm h-8 opacity-50 hover:opacity-100 transition-opacity" />
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                    <div>
+                        <span className="text-[10px] font-black text-blue-400 mb-4 block uppercase tracking-widest">{news.date}</span>
+                        <h1 className="text-5xl md:text-6xl font-black text-white mb-6 uppercase tracking-tighter leading-none">{news.title}</h1>
+                        <p className="text-xl text-slate-400 font-light leading-relaxed">{news.details}</p>
+                    </div>
+                </div>
+            </div>
+        );
+
+        const MootsPage = () => {
+            const [openCreator, setOpenCreator] = useState(MTERS[0].id);
+            const [openProject, setOpenProject] = useState(null);
+            const [selectedEntity, setSelectedEntity] = useState(null);
+
+            const currentCreator = MTERS.find(m => m.id === openCreator);
+            const currentProject = WORKS_DATABASE[openCreator]?.find(p => p.id === openProject);
+
+            const resetNav = () => {
+                setOpenCreator(null);
+                setOpenProject(null);
+                setSelectedEntity(null);
+            };
+
+            return (
+                <div className="min-h-screen pt-20 flex flex-col lg:flex-row bg-[#0f0a02]">
+                    {/* Mobile Breadcrumbs */}
+                    <div className="lg:hidden p-6 border-b border-amber-900/10 sticky top-20 bg-[#0f0a02] z-[80] flex items-center gap-2 overflow-x-auto no-scrollbar">
+                        <button onClick={resetNav} className="text-[10px] font-black text-amber-500 uppercase shrink-0">Archive</button>
+                        {openCreator && (
+                            <>
+                                <Icon name="ChevronRight" className="w-3 h-3 text-white/20 shrink-0" />
+                                <button onClick={() => { setOpenProject(null); setSelectedEntity(null); }} className="text-[10px] font-black text-white/60 uppercase shrink-0">{currentCreator?.name}</button>
+                            </>
+                        )}
+                        {openProject && (
+                            <>
+                                <Icon name="ChevronRight" className="w-3 h-3 text-white/20 shrink-0" />
+                                <button onClick={() => setSelectedEntity(null)} className="text-[10px] font-black text-white/60 uppercase shrink-0">{currentProject?.title}</button>
+                            </>
+                        )}
+                    </div>
+
+                    <aside className="w-80 border-r border-amber-900/10 p-8 hidden lg:block h-screen sticky top-0 overflow-y-auto shrink-0">
+                        <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-amber-600/50 mb-10 flex items-center gap-2">
+                            <Icon name="Cpu" className="w-3 h-3" />
+                            Moots Bios
+                        </h2>
+                        <div className="space-y-6">
+                            {MTERS.map(mter => (
+                                <div key={mter.id} className="space-y-2">
+                                    <button onClick={() => setOpenCreator(openCreator === mter.id ? null : mter.id)} className={`w-full flex items-center justify-between p-4 rounded-2xl transition-all ${openCreator === mter.id ? 'bg-amber-500/10 text-amber-500 ring-1 ring-amber-500/20' : 'text-amber-100/30 hover:text-amber-100/50'}`}>
+                                        <span className="font-black text-[10px] uppercase tracking-widest">{mter.name}</span>
+                                        <Icon name={openCreator === mter.id ? "ChevronDown" : "ChevronRight"} className="w-4 h-4" />
+                                    </button>
+                                    {openCreator === mter.id && (
+                                        <div className="pl-4 space-y-1">
+                                            {WORKS_DATABASE[mter.id]?.map(project => (
+                                                <div key={project.id}>
+                                                    <button 
+                                                        onClick={() => {
+                                                            setOpenProject(openProject === project.id ? null : project.id);
+                                                            setSelectedEntity({ ...project, name: project.title, category: 'Project' });
+                                                        }} 
+                                                        className={`w-full flex items-center justify-between p-3 rounded-xl text-left transition-all ${openProject === project.id ? 'text-amber-200' : 'text-white/20 hover:text-white/40'}`}
+                                                    >
+                                                        <span className="text-[10px] font-black uppercase tracking-widest leading-none">/ {project.title}</span>
+                                                        <Icon name={openProject === project.id ? "ChevronDown" : "ChevronRight"} className="w-3 h-3" />
+                                                    </button>
+                                                    {openProject === project.id && project.characters && (
+                                                        <div className="pl-6 space-y-4 pt-2 pb-4">
+                                                            {['Characters'].map(cat => (
+                                                                <div key={cat} className="space-y-2">
+                                                                    <h4 className="text-[8px] font-black text-amber-500/40 uppercase tracking-[0.3em]">{cat}</h4>
+                                                                    {(project[cat.toLowerCase()] || []).map(item => (
+                                                                        <button 
+                                                                            key={item.id} 
+                                                                            onClick={() => setSelectedEntity({ ...item, category: cat })} 
+                                                                            className={`block text-[10px] transition-colors pl-2 border-l py-1 w-full text-left ${selectedEntity?.id === item.id ? 'text-amber-400 border-amber-400 font-bold' : 'text-white/40 border-white/5 hover:text-white hover:border-white/20'}`}
+                                                                        >
+                                                                            {item.name}
+                                                                        </button>
+                                                                    ))}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    </aside>
+
+                    <main className="flex-1 p-6 lg:p-20 overflow-y-auto">
+                        {!selectedEntity ? (
+                            <div className="h-full flex flex-col">
+                                <div className="lg:hidden space-y-4">
+                                    {!openCreator ? (
+                                        MTERS.map(m => (
+                                            <button key={m.id} onClick={() => setOpenCreator(m.id)} className="w-full p-8 bg-white/5 rounded-[2rem] border border-white/5 flex items-center justify-between group">
+                                                <span className="text-2xl font-black text-white uppercase tracking-tighter">{m.name}</span>
+                                                <Icon name="ChevronRight" className="text-amber-500" />
+                                            </button>
+                                        ))
+                                    ) : !openProject ? (
+                                        WORKS_DATABASE[openCreator]?.map(p => (
+                                            <button key={p.id} onClick={() => setOpenProject(p.id)} className="w-full p-8 bg-white/5 rounded-[2rem] border border-white/5 flex items-center justify-between">
+                                                <span className="text-2xl font-black text-white uppercase tracking-tighter">{p.title}</span>
+                                                <Icon name="ChevronRight" className="text-amber-500" />
+                                            </button>
+                                        ))
+                                    ) : (
+                                        currentProject?.characters?.map(c => (
+                                            <button key={c.id} onClick={() => setSelectedEntity({ ...c, category: 'Characters' })} className="w-full p-8 bg-white/5 rounded-[2rem] border border-white/5 flex items-center justify-between">
+                                                <span className="text-2xl font-black text-white uppercase tracking-tighter">{c.name}</span>
+                                                <Icon name="ChevronRight" className="text-amber-500" />
+                                            </button>
+                                        ))
+                                    )}
+                                </div>
+                                <div className="hidden lg:flex flex-col items-center justify-center h-full text-center opacity-70">
+                                    <Icon name="ChevronRight" className="w-20 h-20 text-amber-600 mb-8 animate-pulse" />
+                                    <h1 className="text-4xl font-black text-amber-600 uppercase tracking-tighter">Find out a Moot by selecting one on the left.</h1>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="max-w-4xl mx-auto fade-in">
+                                <div className="mb-12">
+                                    <div className="flex items-center gap-3 mb-6">
+                                        <span className="px-3 py-1 bg-amber-500/10 border border-amber-500/20 text-amber-500 text-[9px] font-black uppercase tracking-widest rounded-full">{selectedEntity.category}</span>
+                                        <div className="h-px flex-1 bg-amber-500/10" />
+                                    </div>
+                                    <h1 className="text-7xl font-black text-white uppercase tracking-tighter mb-4">{selectedEntity.name}</h1>
+                                    <p className="text-amber-500/80 font-black uppercase text-xs tracking-[0.3em]">{selectedEntity.role || selectedEntity.base || selectedEntity.style || selectedEntity.type}</p>
+                                </div>
+
+                                {(selectedEntity.media || selectedEntity.img || selectedEntity.content) && (
+                                    <div className="flex flex-col gap-6 mb-12">
+                                        {(selectedEntity.media || [{ type: selectedEntity.type || 'Art', content: selectedEntity.img || selectedEntity.content }]).map((m, i) => (
+                                            <div key={i} className="rounded-[3.5rem] overflow-hidden border border-white/5 bg-slate-900 aspect-video shadow-2xl relative">
+                                                {(m.type === 'Art' || m.type === 'Video' || m.type === 'Film') && m.content && (
+                                                    <div className="w-full h-full relative group">
+                                                        <img src={m.content} className="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-1000" />
+                                                        {(m.type === 'Video' || m.type === 'Film') && (
+                                                            <div className="absolute inset-0 flex items-center justify-center bg-black/40">
+                                                                <Icon name="Play" className="w-16 h-16 text-white" />
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                                {m.type === 'Audio' && (
+                                                    <div className="w-full h-full flex flex-col items-center justify-center p-12 bg-amber-500/5">
+                                                        <div className="flex gap-2 items-end h-20 mb-8">
+                                                            {[...Array(20)].map((_, j) => (
+                                                                <div key={j} className="bar bg-amber-500" style={{ animationDelay: `${j * 0.05}s` }}></div>
+                                                            ))}
+                                                        </div>
+                                                        <audio controls src={m.content} className="w-full max-w-xs h-8 opacity-40 hover:opacity-100 transition-opacity" />
+                                                    </div>
+                                                )}
+                                                <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="bg-white/5 p-12 rounded-[3rem] border border-white/5 backdrop-blur-sm">
+                                    <h3 className="text-white uppercase font-black text-[10px] mb-8 opacity-30 tracking-[0.4em]">Extracted Lore Data</h3>
+                                    <p className="text-2xl text-amber-50 leading-relaxed font-light">
+                                        {selectedEntity.details}
+                                    </p>
+                                </div>
+                            </div>
+                        )}
+                    </main>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
