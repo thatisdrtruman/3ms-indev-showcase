@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>3Ms Simulators - Responsive Flight</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&display=swap');
+        body { 
+            font-family: 'JetBrains Mono', monospace; 
+            background-color: #020617; 
+            color: #f8fafc; 
+            margin: 0; 
+            overflow: hidden; /* Prevents bounce on mobile */
+            touch-action: none;
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        canvas { display: block; width: 100%; height: 100%; }
+        .game-container { height: 100dvh; width: 100vw; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const INITIAL_PIGEONS = Array.from({ length: 9 }, (_, i) => ({
+            id: i,
+            name: `Pigeon ${String.fromCharCode(65 + i)}`,
+            baseSpeed: 0.15 + Math.random() * 0.05,
+            weight: parseFloat((0.8 + Math.random() * 0.5).toFixed(2)),
+            energyRate: 0.012 + Math.random() * 0.008,
+            maxEnergy: 100,
+            color: '#22c55e'
+        }));
+
+        const SHOP_ITEMS = [
+            { id: 'peas', name: 'Peas', cost: 1, effect: 'Energy +25', apply: (p) => ({ ...p, maxEnergy: p.maxEnergy + 25 }) },
+            { id: 'maize', name: 'Maize', cost: 5, effect: 'Speed +15%', apply: (p) => ({ ...p, baseSpeed: p.baseSpeed * 1.15, weight: p.weight + 0.05 }) },
+            { id: 'dari', name: 'Dari', cost: 5, effect: 'Efficiency +20%', apply: (p) => ({ ...p, energyRate: p.energyRate * 0.8 }) }
+        ];
+
+        const PigeonSimulator = () => {
+            const [pigeons, setPigeons] = useState(INITIAL_PIGEONS);
+            const [status, setStatus] = useState('menu'); 
+            const [selectedIds, setSelectedIds] = useState([]);
+            const [results, setResults] = useState(null);
+            const [wallet, setWallet] = useState(15);
+            const [wind, setWind] = useState({ angle: Math.random() * Math.PI * 2, force: Math.random() * 0.06 });
+            
+            const canvasRef = useRef(null);
+            const rivalsRef = useRef([]);
+
+            const toggleSelection = (id) => {
+                if (selectedIds.includes(id)) setSelectedIds(selectedIds.filter(i => i !== id));
+                else if (selectedIds.length < 4) setSelectedIds([...selectedIds, id]);
+            };
+
+            const aiShopping = () => {
+                // Opponents strategically upgrade their roster before the race
+                rivalsRef.current = rivalsRef.current.map(r => {
+                    if (Math.random() > 0.6) {
+                        const item = SHOP_ITEMS[Math.floor(Math.random() * SHOP_ITEMS.length)];
+                        return item.apply(r);
+                    }
+                    return r;
+                });
+            };
+
+            const handleInitiateRace = () => {
+                const entryFee = selectedIds.length === 4 ? 2 : 1;
+                if (wallet >= entryFee) {
+                    setWallet(w => w - entryFee);
+                    aiShopping();
+                    setStatus('playing');
+                }
+            };
+
+            const buyTeamUpgrade = (item) => {
+                if (wallet >= item.cost) {
+                    setWallet(w => w - item.cost);
+                    // Apply upgrade to all player pigeons, not just selected ones
+                    setPigeons(prev => prev.map(bird => item.apply(bird)));
+                }
+            };
+
+            const startTournament = () => {
+                const teams = [{ k: 'red', c: '#ef4444' }, { k: 'yellow', c: '#eab308' }, { k: 'blue', c: '#3b82f6' }, { k: 'orange', c: '#f97316' }];
+                rivalsRef.current = teams.flatMap(t => Array.from({ length: 3 }, (_, i) => ({
+                    id: `${t.k}-${i}`, name: `${t.k.toUpperCase()}${i+1}`, team: t.k,
+                    baseSpeed: 0.12 + Math.random() * 0.08, weight: 0.9 + Math.random() * 0.4,
+                    energyRate: 0.015 + Math.random() * 0.01, maxEnergy: 100, color: t.c
+                })));
+                setStatus('shop');
+            };
+
+            useEffect(() => {
+                if (status !== 'playing') return;
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                let animFrame, startTime;
+                
+                const resize = () => {
+                    canvas.width = canvas.clientWidth * window.devicePixelRatio;
+                    canvas.height = canvas.clientHeight * window.devicePixelRatio;
+                };
+                window.addEventListener('resize', resize);
+                resize();
+
+                const logicalW = 400, logicalH = 400; // Square logic works best for all orientations
+                const startPos = { x: logicalW/2, y: logicalH/2 };
+                const destinations = [
+                    { id: 'player', color: '#22c55e' }, { id: 'red', color: '#ef4444' },
+                    { id: 'yellow', color: '#eab308' }, { id: 'blue', color: '#3b82f6' }, { id: 'orange', color: '#f97316' }
+                ].map(d => ({ ...d, x: 20 + Math.random() * (logicalW-40), y: 20 + Math.random() * (logicalH-40) }));
+
+                // Populated Terrain
+                const terrain = Array.from({ length: 25 }, () => {
+                    const types = ['tree', 'building', 'mountain'];
+                    const type = types[Math.floor(Math.random() * types.length)];
+                    return {
+                        x: Math.random() * logicalW,
+                        y: Math.random() * logicalH,
+                        type,
+                        r: type === 'mountain' ? 15 + Math.random() * 20 : 5 + Math.random() * 10,
+                        h: type === 'mountain' ? 200 : type === 'building' ? 100 : 40
+                    };
+                });
+
+                const rainBands = Array.from({ length: 2 }, () => ({ x: Math.random() * logicalW, w: 50, s: 0.1 }));
+
+                let birds = [
+                    ...pigeons.filter(p => selectedIds.includes(p.id)).map(p => ({ ...p, target: destinations[0], isPlayer: true })),
+                    ...rivalsRef.current.map(r => ({ ...r, target: destinations.find(d => d.id === r.team) }))
+                ].map(b => ({ ...b, x: startPos.x, y: startPos.y, initialX: startPos.x, initialY: startPos.y, energy: b.maxEnergy, finished: false, isResting: false }));
+
+                const loop = (now) => {
+                    if (!startTime) startTime = now;
+                    const elapsed = now - startTime;
+                    const scale = Math.min(canvas.width / logicalW, canvas.height / logicalH);
+                    const offsetX = (canvas.width - logicalW * scale) / 2;
+                    const offsetY = (canvas.height - logicalH * scale) / 2;
+
+                    ctx.setTransform(1, 0, 0, 1, 0, 0);
+                    ctx.fillStyle = '#020617'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    ctx.translate(offsetX, offsetY);
+                    ctx.scale(scale, scale);
+
+                    // Weather
+                    rainBands.forEach(rb => {
+                        rb.x = (rb.x + rb.s) % logicalW;
+                        ctx.fillStyle = 'rgba(59, 130, 246, 0.15)';
+                        ctx.fillRect(rb.x, 0, rb.w, logicalH);
+                    });
+
+                    // Draw Terrain
+                    terrain.forEach(t => {
+                        ctx.beginPath();
+                        if (t.type === 'mountain') ctx.fillStyle = '#1e293b';
+                        else if (t.type === 'building') ctx.fillStyle = '#334155';
+                        else ctx.fillStyle = '#064e3b';
+                        
+                        if (t.type === 'building') ctx.fillRect(t.x - t.r, t.y - t.r, t.r*2, t.r*2);
+                        else ctx.arc(t.x, t.y, t.r, 0, Math.PI * 2);
+                        ctx.fill();
+                    });
+
+                    // Destinations
+                    destinations.forEach(d => {
+                        ctx.strokeStyle = d.color; ctx.lineWidth = 2;
+                        ctx.strokeRect(d.x - 8, d.y - 8, 16, 16);
+                    });
+
+                    // HUD - Timer & Wind Text
+                    const timeLeft = Math.max(0, (40000 - elapsed) / 1000);
+                    ctx.fillStyle = '#10b981';
+                    ctx.font = 'bold 12px "JetBrains Mono"';
+                    ctx.fillText(`TIME: ${timeLeft.toFixed(1)}s`, 15, 25);
+                    ctx.fillText(`WIND: ${(wind.force * 500).toFixed(1)} knots`, 15, 40);
+
+                    // HUD - Wind Compass
+                    ctx.save();
+                    ctx.translate(logicalW - 30, 30);
+                    ctx.rotate(wind.angle);
+                    ctx.strokeStyle = '#3b82f6';
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.moveTo(-10, 0); ctx.lineTo(10, 0); // Shaft
+                    ctx.lineTo(6, -4); ctx.moveTo(10, 0); ctx.lineTo(6, 4); // Head
+                    ctx.stroke();
+                    ctx.restore();
+                    ctx.fillStyle = '#3b82f6';
+                    ctx.font = '8px "JetBrains Mono"';
+                    ctx.textAlign = 'center';
+                    ctx.fillText("WIND DIR", logicalW - 30, 50);
+                    ctx.textAlign = 'start';
+
+                    birds.forEach(b => {
+                        if (b.finished) return;
+                        if (b.isResting) {
+                            b.energy += 0.4; if (b.energy >= b.maxEnergy * 0.4) b.isResting = false;
+                        } else {
+                            if (b.energy < 15 && Math.random() < 0.02) b.isResting = true;
+                            let sM = 1, eM = 1;
+                            
+                            // Terrain interaction logic
+                            terrain.forEach(t => {
+                                const dist = Math.hypot(b.x - t.x, b.y - t.y);
+                                if (dist < t.r) {
+                                    // Deciding to fly "Above": Heavy birds slow down more, all burn more energy
+                                    const climbDifficulty = (t.h / 100) * b.weight;
+                                    sM *= (0.7 / climbDifficulty);
+                                    eM *= (2.5 * climbDifficulty);
+                                }
+                            });
+
+                            rainBands.forEach(rb => { if(b.x > rb.x && b.x < rb.x+rb.w) { sM=0.4; eM=3; }});
+                            
+                            const angle = Math.atan2(b.target.y - b.y, b.target.x - b.x);
+                            
+                            // Wind Influence: Calculation of headwind/tailwind
+                            const windDot = Math.cos(angle) * Math.cos(wind.angle) + Math.sin(angle) * Math.sin(wind.angle);
+                            const windEffect = windDot * wind.force;
+                            
+                            // Apply movement with wind drift
+                            b.x += Math.cos(angle) * b.baseSpeed * sM + Math.cos(wind.angle) * wind.force;
+                            b.y += Math.sin(angle) * b.baseSpeed * sM + Math.sin(wind.angle) * wind.force;
+                            
+                            // Energy drain increases against headwind (windDot < 0)
+                            const windEffort = windDot < 0 ? (1 + Math.abs(windDot)) : 1;
+                            b.energy -= (b.energyRate * b.weight * eM * windEffort);
+                            b.angle = angle;
+                            if (Math.hypot(b.target.x - b.x, b.target.y - b.y) < 5) { b.finished = true; b.finishTime = elapsed; }
+                        }
+
+                        ctx.save(); ctx.translate(b.x, b.y);
+                        if (b.isResting) { ctx.fillStyle = "#fff"; ctx.font = "8px Arial"; ctx.fillText("Zzz", 2, -2); }
+                        else { ctx.rotate(b.angle); ctx.fillStyle = b.color; ctx.beginPath(); ctx.moveTo(8,0); ctx.lineTo(-4,-4); ctx.lineTo(-4,4); ctx.fill(); }
+                        ctx.restore();
+                    });
+
+                    if (birds.every(b => b.finished) || elapsed > 40000) {
+                        const resultsProcessed = birds.map(b => {
+                            const displacement = Math.hypot(b.target.x - b.initialX, b.target.y - b.initialY);
+                            const timeInSec = (b.finishTime || 40000) / 1000;
+                            return {
+                                ...b,
+                                avgSpeed: displacement / timeInSec
+                            };
+                        });
+                        
+                        const sorted = resultsProcessed.sort((a,b) => b.avgSpeed - a.avgSpeed);
+                        setResults(sorted); setWallet(w => w + (sorted[0]?.id.toString().includes('player') || !isNaN(sorted[0]?.id) ? 15 : 5));
+                        setStatus('finished');
+                    } else { animFrame = requestAnimationFrame(loop); }
+                };
+                animFrame = requestAnimationFrame(loop);
+                return () => { window.removeEventListener('resize', resize); cancelAnimationFrame(animFrame); };
+            }, [status]);
+
+            return (
+                <div className="game-container flex flex-col bg-slate-950">
+                    {status === 'playing' ? (
+                        <canvas ref={canvasRef} className="flex-1 cursor-none" />
+                    ) : status === 'menu' || status === 'shop' ? (
+                        <div className="flex-1 overflow-y-auto p-4 md:p-10 custom-scrollbar">
+                            <header className="flex justify-between items-center mb-6">
+                                <h1 className="text-2xl md:text-4xl font-black text-emerald-400 italic">Pigeon Race Simulator v2</h1>
+                                <div className="bg-white/5 px-4 py-2 rounded-xl border border-white/10">
+                                    <span className="text-[10px] block opacity-50 uppercase font-bold">Wallet</span>
+                                    <span className="text-xl font-black">{wallet}u</span>
+                                </div>
+                            </header>
+
+                            <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                                <div className="lg:col-span-3">
+                                    <h2 className="text-[10px] font-black opacity-40 uppercase tracking-[0.3em] mb-4">Select Your Squad (3-4 Birds)</h2>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+                                        {pigeons.map(p => (
+                                            <div key={p.id} onClick={() => toggleSelection(p.id)} className={`p-4 rounded-2xl border-2 transition-all active:scale-95 ${selectedIds.includes(p.id) ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/5 bg-white/5'}`}>
+                                                <div className="flex justify-between items-center mb-2">
+                                                    <span className="font-bold">{p.name}</span>
+                                                    {selectedIds.includes(p.id) && <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
+                                                </div>
+                                                <div className="flex gap-4 text-[9px] font-black opacity-60 uppercase">
+                                                    <span>SPD {p.baseSpeed.toFixed(2)}</span>
+                                                    <span>WGT {p.weight.toFixed(2)}</span>
+                                                    <span>EFF {(1/p.energyRate).toFixed(0)}</span>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="flex flex-col gap-3">
+                                    <h2 className="text-[10px] font-black opacity-40 uppercase tracking-[0.3em] mb-1">Squad Upgrades</h2>
+                                    {SHOP_ITEMS.map(item => (
+                                        <button key={item.id} onClick={() => buyTeamUpgrade(item)} disabled={wallet < item.cost} className="p-4 bg-white/5 border border-white/10 rounded-2xl text-left hover:border-emerald-500/50 disabled:opacity-20 transition-all">
+                                            <div className="text-xs font-black">{item.name} <span className="text-emerald-400 ml-2">{item.cost}u</span></div>
+                                            <div className="text-[10px] opacity-50">{item.effect}</div>
+                                        </button>
+                                    ))}
+                                    {status === 'menu' ? (
+                                        <button disabled={selectedIds.length < 3} onClick={startTournament} className="mt-4 py-5 bg-emerald-500 text-black font-black rounded-2xl shadow-lg shadow-emerald-900/20 active:scale-95 transition-all disabled:opacity-20">REGISTER TEAM</button>
+                                    ) : (
+                                        <button disabled={selectedIds.length < 3 || wallet < (selectedIds.length === 4 ? 2 : 1)} onClick={handleInitiateRace} className="mt-4 py-5 bg-blue-500 text-white font-black rounded-2xl shadow-lg shadow-blue-900/20 active:scale-95 transition-all disabled:opacity-20 font-mono">INITIATE: {selectedIds.length === 4 ? '2u' : '1u'}</button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="flex-1 flex flex-col items-center justify-center p-6 text-center">
+                            <h2 className="text-4xl font-black italic mb-8">LOG_DATA</h2>
+                            <div className="w-full max-w-2xl space-y-2 mb-8">
+                                {results?.slice(0, 5).map((b, i) => (
+                                    <div key={i} className={`flex justify-between p-4 rounded-xl border ${!isNaN(b.id) ? 'border-emerald-500 bg-emerald-500/5' : 'border-white/5 bg-white/5'}`}>
+                                        <span className="font-bold text-sm w-1/4 text-left">{i+1}. {b.name}</span>
+                                        <span className="text-[10px] opacity-60 uppercase w-1/4">Team: {b.team || 'Green'}</span>
+                                        <span className="font-mono text-xs text-emerald-400 w-1/4 text-right">{b.avgSpeed.toFixed(2)} u/s</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <button onClick={() => { setWind({ angle: Math.random()*6, force: Math.random()*0.06 }); setStatus('shop'); }} className="px-12 py-4 bg-white text-black font-black rounded-full uppercase text-xs tracking-widest">Continue Leg</button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<PigeonSimulator />);
+    </script>
+</body>
+</html>

@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3Ms Simulators - Tree Climber & Pigeon Sim</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300;0,400;0,600;0,700;0,800;1,400&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body { 
+            font-family: 'Open Sans', sans-serif; 
+            background-color: #020617; 
+            color: #f8fafc;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 10px; }
+
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        const TreeClimber = () => {
+            const canvasRef = React.useRef(null);
+            const [gameState, setGameState] = useState('menu');
+            const [score, setScore] = useState(0);
+            const [ui, setUi] = useState({ title: 'TREE CLIMBER', sub: 'Avoid the fruit!', btn: 'START' });
+            const touchSide = React.useRef(null);
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                let state = 'menu';
+                let curScore = 0;
+                let speed = 3;
+                let frameCount = 0;
+                const treeW = 140;
+                const treeX = (canvas.width - treeW) / 2;
+                const player = { x: 185, y: 520, w: 30, h: 40, dx: 0, speed: 6 };
+                let fruits = [];
+                let audioCtx;
+
+                const playSfx = (f, type, d, v = 0.05) => {
+                    if (!audioCtx) return;
+                    const o = audioCtx.createOscillator();
+                    const g = audioCtx.createGain();
+                    o.type = type;
+                    o.frequency.setValueAtTime(f, audioCtx.currentTime);
+                    g.gain.setValueAtTime(v, audioCtx.currentTime);
+                    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + d);
+                    o.connect(g); g.connect(audioCtx.destination);
+                    o.start(); o.stop(audioCtx.currentTime + d);
+                };
+
+                const keys = {};
+                const kd = (e) => keys[e.code] = true;
+                const ku = (e) => keys[e.code] = false;
+                window.addEventListener('keydown', kd);
+                window.addEventListener('keyup', ku);
+
+                window._startGame = () => {
+                    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                    curScore = 0; setScore(0); speed = 3; frameCount = 0; fruits = [];
+                    player.x = 185; state = 'playing'; setGameState('playing');
+                };
+
+                const update = () => {
+                    if (state !== 'playing') return;
+                    frameCount++;
+                    player.dx = 0;
+                    if (keys['ArrowLeft'] || touchSide.current === 'left') player.dx = -player.speed;
+                    if (keys['ArrowRight'] || touchSide.current === 'right') player.dx = player.speed;
+                    player.x += player.dx;
+                    if (player.dx !== 0 && frameCount % 12 === 0) {
+                        playSfx(400 + Math.random() * 50, 'sine', 0.05, 0.02);
+                    }
+
+                    player.x = Math.max(treeX, Math.min(player.x, treeX + treeW - player.w));
+                    if (frameCount % 60 === 0) { 
+                        curScore++; setScore(curScore); 
+                        playSfx(800 + Math.random() * 40, 'triangle', 0.1, 0.03);
+                    }
+                    if (frameCount % 600 === 0) speed += 0.5;
+                    if (frameCount % Math.max(20, 50 - Math.floor(curScore/10)) === 0) {
+                        fruits.push({ x: treeX + Math.random()*(treeW-20), y: -20, r: 10 + Math.random()*10 });
+                    }
+                    for (let i = fruits.length - 1; i >= 0; i--) {
+                        fruits[i].y += speed + 2;
+                        let f = fruits[i];
+                        if (f.x < player.x + player.w && f.x + f.r > player.x && f.y < player.y + player.h && f.y + f.r > player.y) {
+                            state = 'over'; setGameState('over');
+                            playSfx(60, 'sawtooth', 0.8, 0.15);
+                            setUi({ title: 'GAME OVER', sub: `${curScore} meters climbed`, btn: 'RETRY' });
+                        }
+                        if (f.y > 600) fruits.splice(i, 1);
+                    }
+                };
+
+                const draw = () => {
+                    ctx.fillStyle = '#87CEEB'; ctx.fillRect(0, 0, 400, 600);
+                    ctx.fillStyle = '#5D4037'; ctx.fillRect(treeX, 0, treeW, 600);
+                    ctx.fillStyle = '#4E342E'; ctx.fillRect(treeX + 20, 0, 8, 600); ctx.fillRect(treeX + 110, 0, 8, 600);
+                    ctx.fillStyle = '#FFEB3B'; ctx.fillRect(player.x, player.y, player.w, player.h);
+                    ctx.fillStyle = '#000'; ctx.fillRect(player.x+5, player.y+8, 5, 5); ctx.fillRect(player.x+20, player.y+8, 5, 5);
+                    ctx.fillStyle = '#F44336'; fruits.forEach(f => { ctx.beginPath(); ctx.arc(f.x, f.y, f.r, 0, Math.PI*2); ctx.fill(); });
+                    requestAnimationFrame(draw);
+                };
+
+                const tick = setInterval(update, 1000/60);
+                const anim = requestAnimationFrame(draw);
+                return () => { clearInterval(tick); cancelAnimationFrame(anim); window.removeEventListener('keydown', kd); window.removeEventListener('keyup', ku); delete window._startGame; };
+            }, []);
+
+            return (
+                <div className="relative w-full h-full bg-sky-400 font-mono overflow-hidden">
+                    <canvas ref={canvasRef} width="400" height="600" className="w-full h-full object-contain" />
+                    {gameState !== 'playing' && (
+                        <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center p-6 text-center">
+                            <h2 className="text-white text-4xl font-black mb-2 uppercase">{ui.title}</h2>
+                            <p className="text-white/70 mb-8 uppercase text-xs tracking-widest">{ui.sub}</p>
+                            <button onClick={() => window._startGame?.()} className="bg-emerald-500 border-4 border-white text-white px-10 py-4 font-black hover:bg-emerald-600 transition-all">
+                                {ui.btn}
+                            </button>
+                        </div>
+                    )}
+                    {gameState === 'playing' && (
+                        <>
+                            <div className="absolute top-8 left-8 text-white text-3xl font-black drop-shadow-lg">{score}m</div>
+                            <div className="absolute bottom-10 left-0 right-0 flex justify-between px-10 pointer-events-none">
+                                <div onMouseDown={() => touchSide.current = 'left'} onMouseUp={() => touchSide.current = null} onTouchStart={(e) => { e.preventDefault(); touchSide.current = 'left'; }} onTouchEnd={() => touchSide.current = null} className="w-20 h-20 bg-white/20 border-4 border-white/40 rounded-full flex items-center justify-center text-white font-black pointer-events-auto active:bg-white/40 cursor-pointer select-none">L</div>
+                                <div onMouseDown={() => touchSide.current = 'right'} onMouseUp={() => touchSide.current = null} onTouchStart={(e) => { e.preventDefault(); touchSide.current = 'right'; }} onTouchEnd={() => touchSide.current = null} className="w-20 h-20 bg-white/20 border-4 border-white/40 rounded-full flex items-center justify-center text-white font-black pointer-events-auto active:bg-white/40 cursor-pointer select-none">R</div>
+                            </div>
+                        </>
+                    )}
+                </div>
+            );
+        };
+
+        const PigeonSimulator = () => {
+            const canvasRef = React.useRef(null);
+            const [status, setStatus] = useState('menu');
+            const [results, setResults] = useState(null);
+            const stats = React.useRef({ speed: 0, alt: 0, windSpd: 0, windDir: 0, totalSpeed: 0, frames: 0 });
+
+            useEffect(() => {
+                const canvas = canvasRef.current;
+                const ctx = canvas.getContext('2d');
+                let animFrame;
+                let startTime;
+                const duration = 30000;
+                const logicalSize = 100;
+                const scale = 400 / logicalSize;
+
+                const birdClasses = [
+                    { type: 'Scout', speedBase: 0.08, alt: 150, color: '#10b981' },
+                    { type: 'Heavy', speedBase: 0.04, alt: 80, color: '#f43f5e' },
+                    { type: 'Messenger', speedBase: 0.06, alt: 120, color: '#f59e0b' }
+                ];
+
+                const startPos = { x: Math.random() * logicalSize, y: Math.random() * logicalSize };
+                const birds = Array.from({ length: 10 }, (_, i) => ({
+                    id: i, class: birdClasses[i % 3], x: startPos.x, y: startPos.y,
+                    targetX: Math.random() * logicalSize, targetY: Math.random() * logicalSize,
+                    finished: false, totalSpeed: 0, frameCount: 0
+                }));
+
+                const scenery = Array.from({ length: 12 }, () => ({
+                    x: Math.random() * logicalSize, y: Math.random() * logicalSize,
+                    type: Math.random() > 0.5 ? 'building' : 'tree',
+                    size: 2 + Math.random() * 4, height: 50 + Math.floor(Math.random() * 150)
+                }));
+
+                const windField = Array.from({ length: 5 }, () => Array.from({ length: 5 }, () => ({ angle: Math.random() * Math.PI * 2, strength: 0.2 + Math.random() * 0.8 })));
+                const getWind = (x, y) => windField[Math.min(4, Math.max(0, Math.floor(x / 20)))][Math.min(4, Math.max(0, Math.floor(y / 20)))];
+
+                const loop = (now) => {
+                    if (!startTime) startTime = now;
+                    const progress = Math.min((now - startTime) / duration, 1);
+                    ctx.clearRect(0, 0, 400, 400);
+                    ctx.fillStyle = '#020617'; ctx.fillRect(0, 0, 400, 400);
+                    ctx.strokeStyle = '#1e293b'; ctx.strokeRect(0, 0, 400, 400);
+
+                    for(let i=0; i<5; i++) for(let j=0; j<5; j++) {
+                        const w = windField[i][j]; const cx = (i * 20 + 10) * scale; const cy = (j * 20 + 10) * scale;
+                        ctx.beginPath(); ctx.strokeStyle = '#1e293b'; ctx.moveTo(cx, cy); ctx.lineTo(cx + Math.cos(w.angle) * 8, cy + Math.sin(w.angle) * 8); ctx.stroke();
+                    }
+
+                    scenery.forEach(s => {
+                        ctx.strokeStyle = s.type === 'building' ? '#475569' : '#065f46';
+                        if(s.type === 'building') ctx.strokeRect((s.x - s.size/2) * scale, (s.y - s.size/2) * scale, s.size * scale, s.size * scale);
+                        else { ctx.beginPath(); ctx.arc(s.x * scale, s.y * scale, (s.size/2) * scale, 0, Math.PI*2); ctx.stroke(); }
+                    });
+
+                    // Draw Destinations as dots
+                    birds.forEach(b => {
+                        ctx.fillStyle = b.class.color;
+                        ctx.beginPath();
+                        ctx.arc(b.targetX * scale, b.targetY * scale, 2, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.strokeStyle = b.class.color;
+                        ctx.strokeRect((b.targetX - 2) * scale, (b.targetY - 2) * scale, 4 * scale, 4 * scale);
+                    });
+
+                    // Departure Point Symbol
+                    ctx.fillStyle = '#ffffff';
+                    ctx.fillRect((startPos.x - 2) * scale, (startPos.y - 2) * scale, 4 * scale, 4 * scale);
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.strokeRect((startPos.x - 3) * scale, (startPos.y - 3) * scale, 6 * scale, 6 * scale);
+
+                    let avgSpeedSum = 0;
+                    birds.forEach(b => {
+                        if (b.finished) return;
+                        const wind = getWind(b.x, b.y); const angleToTarget = Math.atan2(b.targetY - b.y, b.targetX - b.x);
+                        const baseStep = b.class.speedBase;
+                        b.x += Math.cos(angleToTarget) * baseStep + Math.cos(wind.angle) * wind.strength * 0.05;
+                        b.y += Math.sin(angleToTarget) * baseStep + Math.sin(wind.angle) * wind.strength * 0.05;
+                        b.totalSpeed += baseStep; b.frameCount++;
+                        if (Math.hypot(b.targetX - b.x, b.targetY - b.y) < 1) b.finished = true;
+                        ctx.save(); ctx.translate(b.x * scale, b.y * scale); ctx.rotate(angleToTarget); ctx.fillStyle = b.class.color;
+                        ctx.beginPath(); ctx.moveTo(6, 0); ctx.lineTo(-4, -4); ctx.lineTo(-4, 4); ctx.fill(); ctx.restore();
+                        avgSpeedSum += baseStep;
+                    });
+
+                    ctx.fillStyle = '#10b981'; ctx.font = '10px monospace';
+                    ctx.fillText(`AVG VELOCITY: ${(avgSpeedSum / 10).toFixed(4)}`, 20, 30);
+                    ctx.fillRect(20, 380, progress * 360, 2);
+
+                    if (progress < 1) animFrame = requestAnimationFrame(loop);
+                    else {
+                        setResults(birds.map(b => ({ id: b.id + 1, type: b.class.type, avgSpeed: b.frameCount > 0 ? (b.totalSpeed / b.frameCount).toFixed(4) : "0.0000", finished: b.finished })));
+                        setStatus('finished');
+                    }
+                };
+                if (status === 'playing') animFrame = requestAnimationFrame(loop);
+                return () => cancelAnimationFrame(animFrame);
+            }, [status]);
+
+            return (
+                <div className="relative w-full h-full bg-slate-950 overflow-hidden rounded-[3rem]">
+                    <canvas ref={canvasRef} width="400" height="400" className="w-full h-full" />
+                    {status === 'menu' && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 p-10 text-center">
+                            <h2 className="text-emerald-500 text-3xl font-black mb-4 uppercase">Pigeon Simulator</h2>
+                            <button onClick={() => setStatus('playing')} className="bg-emerald-600 text-white px-8 py-3 font-black uppercase text-xs rounded-full">Initiate Flight</button>
+                        </div>
+                    )}
+                    {status === 'finished' && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-emerald-950/95 p-6 text-center overflow-y-auto custom-scrollbar">
+                            <h2 className="text-white text-3xl font-black mb-4 uppercase tracking-tighter">Flight Manifest</h2>
+                            <div className="w-full max-w-md space-y-2 mb-8 text-left">
+                                <div className="flex justify-between text-[10px] font-black uppercase text-emerald-400 border-b border-white/10 pb-2">
+                                    <span className="w-8">Bird</span>
+                                    <span className="w-20">Class</span>
+                                    <span className="flex-1 text-center">Avg Vel</span>
+                                    <span className="w-16 text-right">Status</span>
+                                </div>
+                                {results && results.map(b => (
+                                    <div key={b.id} className="flex justify-between text-[11px] font-mono text-white/80 border-b border-white/5 py-1">
+                                        <span className="w-8">#{b.id}</span>
+                                        <span className="w-20">{b.type}</span>
+                                        <span className="flex-1 text-center">{b.avgSpeed}</span>
+                                        <span className={`w-16 text-right ${b.finished ? "text-emerald-400" : "text-rose-500"}`}>{b.finished ? "OK" : "MIA"}</span>
+                                    </div>
+                                ))}
+                            </div>
+                            <button onClick={() => setStatus('menu')} className="border border-white/20 text-white px-8 py-3 font-black text-xs rounded-full hover:bg-white/10">Reboot</button>
+                        </div>
+                    )}
+                </div>
+            );
+        };
+
+        const App = () => (
+            <div className="max-w-6xl mx-auto py-20 px-10">
+                <header className="mb-20 text-center relative">
+                    <h1 className="text-6xl font-black text-white uppercase tracking-tighter mb-4">Interactive Archive</h1>
+                    <p className="text-slate-500 uppercase tracking-widest text-[10px]">Testing Grounds for Mooters, Mooteds and Moots</p>
+                    
+                    {/* Header Link */}
+                    <a href="[insertsitehere[" target="_blank" className="inline-flex mt-6 items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors">
+                        <span className="text-[10px] font-bold uppercase tracking-widest border-b border-emerald-400/30 pb-1">Pigeon Racing Simulator v2</span>
+                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                    </a>
+                </header>
+                
+                <div className="grid lg:grid-cols-2 gap-20">
+                    <div className="space-y-8">
+                        <div className="bg-white/5 p-8 rounded-[2.5rem] border border-white/5">
+                            <h2 className="text-2xl font-black uppercase text-white mb-2">Tree Climber</h2>
+                            <p className="text-slate-500 text-xs font-mono">Use Left/Right Joypads or Arrow Keys</p>
+                        </div>
+                        <div className="aspect-[2/3] border border-white/10 rounded-[3.5rem] overflow-hidden shadow-2xl">
+                            <TreeClimber />
+                        </div>
+                    </div>
+                    <div className="space-y-8">
+                        <div className="bg-white/5 p-8 rounded-[2.5rem] border border-white/5">
+                            <h2 className="text-2xl font-black uppercase text-white mb-2">Pigeon Simulator</h2>
+                            <p className="text-slate-500 text-xs font-mono">Trajectory and Wind Turbulence Analysis</p>
+                        </div>
+                        <div className="aspect-square border border-white/10 rounded-[3.5rem] overflow-hidden shadow-2xl">
+                            <PigeonSimulator />
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer Section */}
+                <footer className="mt-32 pt-10 border-t border-white/5 text-center">
+                    <p className="text-[9px] text-slate-600 uppercase tracking-[0.4em] mb-4">Official Documentation & Source</p>
+                    <a 
+                        href="[insertsitehere[" 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        className="px-6 py-2 rounded-full border border-white/10 text-white/40 text-[10px] font-black uppercase tracking-widest hover:bg-white/5 hover:text-white transition-all"
+                    >
+                        Visit [insertsitehere[
+                    </a>
+                </footer>
+            </div>
+        );
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
