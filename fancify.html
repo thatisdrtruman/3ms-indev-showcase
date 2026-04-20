@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fancify Racing Pigeons | VR Heritage & STEM Simulator</title>
+    
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    
+    <!-- Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        charcoal: '#121212',
+                        'charcoal-light': '#1e1e1e',
+                        loftgreen: '#2D5A27',
+                        skyblue: '#5B7C99',
+                        gold: '#D4AF37',
+                    },
+                    fontFamily: {
+                        sans: ['Lato', 'sans-serif'],
+                        heading: ['Poppins', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Styles for Glow and Animations */
+        body { background-color: #121212; color: #f3f4f6; }
+        
+        .glass-nav {
+            background: rgba(18, 18, 18, 0.85);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(212, 175, 55, 0.2);
+        }
+
+        .hero-bg {
+            background: linear-gradient(to bottom, rgba(18, 18, 18, 0.6), rgba(18, 18, 18, 1)),
+                        url('https://images.unsplash.com/photo-1596704044955-40b54060b263?auto=format&fit=crop&q=80&w=2070') center/cover;
+        }
+
+        .glow-text { text-shadow: 0 0 20px rgba(212, 175, 55, 0.4); }
+        
+        .card-hover {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        .card-hover:hover {
+            transform: translateY(-5px);
+            border-color: #D4AF37;
+            box-shadow: 0 10px 30px rgba(212, 175, 55, 0.15);
+        }
+
+        .math-block {
+            background: rgba(91, 124, 153, 0.1);
+            border-left: 4px solid #5B7C99;
+        }
+        
+        /* Math formatting */
+        math { font-family: 'Times New Roman', Times, serif; font-size: 1.2em; color: #D4AF37; }
+    </style>
+</head>
+<body class="antialiased selection:bg-gold selection:text-charcoal">
+
+    <!-- Navigation -->
+    <nav class="fixed w-full z-50 glass-nav transition-all duration-300" id="navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-20">
+                <div class="flex-shrink-0 flex items-center gap-3 cursor-pointer" onclick="window.scrollTo(0,0)">
+                    <i class="fa-solid fa-dove text-gold text-3xl"></i>
+                    <span class="font-heading font-bold text-2xl tracking-wider text-white uppercase">Fancify</span>
+                </div>
+                <div class="hidden md:flex space-x-8 items-center">
+                    <a href="#crisis" class="text-gray-300 hover:text-gold font-semibold transition-colors uppercase text-sm tracking-wider">The Crisis</a>
+                    <a href="#products" class="text-gray-300 hover:text-gold font-semibold transition-colors uppercase text-sm tracking-wider">Our Platform</a>
+                    <a href="#audiences" class="text-gray-300 hover:text-gold font-semibold transition-colors uppercase text-sm tracking-wider">Audiences</a>
+                    <a href="#support" class="bg-gold text-charcoal px-6 py-2 rounded-full font-heading font-bold hover:bg-yellow-500 transition-all shadow-[0_0_15px_rgba(212,175,55,0.4)] uppercase text-sm tracking-widest">Support the Cause</a>
+                </div>
+                <!-- Mobile menu button -->
+                <div class="md:hidden flex items-center">
+                    <button class="text-gray-300 hover:text-white" id="mobile-menu-btn">
+                        <i class="fa-solid fa-bars text-2xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div class="md:hidden hidden bg-charcoal-light border-b border-gray-800" id="mobile-menu">
+            <a href="#crisis" class="block px-4 py-3 text-gray-300 hover:text-gold hover:bg-gray-800">The Crisis</a>
+            <a href="#products" class="block px-4 py-3 text-gray-300 hover:text-gold hover:bg-gray-800">Our Platform</a>
+            <a href="#audiences" class="block px-4 py-3 text-gray-300 hover:text-gold hover:bg-gray-800">Audiences</a>
+            <a href="#support" class="block px-4 py-3 text-gold font-bold hover:bg-gray-800">Support the Cause</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="relative h-screen flex items-center hero-bg overflow-hidden pt-20">
+        <div class="absolute inset-0 bg-gradient-to-r from-charcoal via-charcoal/90 to-transparent"></div>
+        <div class="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full">
+            <div class="max-w-3xl">
+                <div class="inline-block px-4 py-1 rounded-full border border-sky-500/30 bg-sky-500/10 text-skyblue font-bold tracking-widest text-xs uppercase mb-6">
+                    Preserving 1,000 Years of Heritage
+                </div>
+                <h1 class="text-5xl md:text-7xl font-heading font-bold leading-tight mb-6 glow-text text-white">
+                    The Messenger of <br><span class="text-gold">Our Future.</span>
+                </h1>
+                <p class="text-xl text-gray-300 mb-10 leading-relaxed font-light">
+                    Fancify Racing Pigeons transforms a vanishing cultural heritage into a high-fidelity VR experience and STEM-based racing simulator for the next generation.
+                </p>
+                <div class="flex flex-wrap gap-4">
+                    <a href="#support" class="bg-gold text-charcoal px-8 py-4 rounded-full font-heading font-bold text-lg hover:bg-yellow-500 transition-all shadow-[0_0_20px_rgba(212,175,55,0.4)]">
+                        Fund the Vision
+                    </a>
+                    <a href="https://thatisdrtruman.github.io/3ms-indev-showcase/pigeon_race" target="_blank" rel="noopener noreferrer" class="bg-charcoal-light border-2 border-skyblue text-white px-8 py-4 rounded-full font-heading font-bold text-lg hover:bg-skyblue/20 transition-all flex items-center gap-3">
+                        <i class="fa-solid fa-gamepad"></i> Play 2D Simulator
+                    </a>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- The Crisis Section -->
+    <section id="crisis" class="py-24 bg-charcoal border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-16">
+                <h2 class="text-4xl font-heading font-bold mb-4">A Heritage in <span class="text-gold">Crisis</span></h2>
+                <div class="w-24 h-1 bg-skyblue mx-auto mb-6"></div>
+                <p class="text-gray-400 text-lg">Since the days of Noah's Ark to the 32 Dickin Medal heroes of WWII, pigeons have been our ultimate messengers. Today, this bond is breaking.</p>
+            </div>
+
+            <div class="grid md:grid-cols-2 gap-12 items-center">
+                <div class="bg-charcoal-light p-10 rounded-3xl border border-red-900/30 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 w-64 h-64 bg-red-900/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
+                    <h3 class="text-7xl font-heading font-bold text-red-500 mb-2">83%</h3>
+                    <h4 class="text-2xl font-bold text-white mb-4 uppercase tracking-wider">Decline in UK Clubs</h4>
+                    <p class="text-gray-400">In 1980, there were 60,000 competitive pigeon organizations in the UK. Today, there are less than 10,000. Without digital intervention, a thousand-year-old knowledge of animal husbandry will vanish.</p>
+                </div>
+                <div class="space-y-6">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-full bg-skyblue/20 flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-book-journal-whills text-skyblue text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-bold text-white mb-2">Loss of History</h4>
+                            <p class="text-gray-400">The stories of the French Resistance and the founding of Reuters news agency risk being forgotten by modern youth.</p>
+                        </div>
+                    </div>
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-full bg-loftgreen/20 flex items-center justify-center flex-shrink-0">
+                            <i class="fa-solid fa-leaf text-loftgreen text-xl"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-bold text-white mb-2">Disconnection from Nature</h4>
+                            <p class="text-gray-400">Fewer opportunities for suburban and rural youth to engage in meaningful outdoor learning and animal responsibility.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Visual Storytelling Section (Images) -->
+    <section class="py-12 bg-charcoal">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-1 md:grid-cols-3 gap-6">
+             <!-- Military History -->
+             <div class="relative h-64 rounded-2xl overflow-hidden group">
+                <img src="https://www.classicwarbirds.co.uk/images/articles/pigeon-winkie.jpg" alt="Vintage military pigeon" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                <div class="absolute bottom-6 left-6">
+                    <h3 class="text-white font-heading font-bold text-xl">Military Messengers</h3>
+                    <p class="text-gray-300 text-sm">32 Dickin Medals for WWII Gallantry (C) PDSA</p>
+                </div>
+            </div>
+            <!-- VR Education -->
+             <div class="relative h-64 rounded-2xl overflow-hidden group">
+                <img src="https://img.rawpixel.com/s3fs-private/rawpixel_images/website_content/s88-pom-1540-kut-02_1.jpg?w=600&dpr=1&fit=default&crop=default&q=65&vib=3&con=3&usm=15&bg=F4F4F3&ixlib=js-2.2.1&s=53ed93ccf3c0a6faffd3de006a671a5d" alt="Student wearing VR headset" class="w-full h-full object-cover opacity-80 group-hover:scale-105 transition-all duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                <div class="absolute bottom-6 left-6">
+                    <h3 class="text-white font-heading font-bold text-xl">VR Apprenticeship</h3>
+                    <p class="text-gray-300 text-sm">Hands-on STEM learning anywhere</p>
+                </div>
+            </div>
+            <!-- Traditional Racing -->
+            <div class="relative h-64 rounded-2xl overflow-hidden group">
+                <img src="https://lh6.ggpht.com/Da2ADuzNX-M1Psxzx-O1PdBYeQ35W6rLRVLpU9tkMmMaRNxeTad9IUP9J0r8edHjULMQ12uNMNFwQ9Wzo2Bb1UDT3AQ=s0" alt="Pigeon release at dawn" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                <div class="absolute bottom-6 left-6">
+                    <h3 class="text-white font-heading font-bold text-xl">The Racing Heritage</h3>
+                    <p class="text-gray-300 text-sm">60+ mile stamina and speed tests</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Our Products Section -->
+    <section id="products" class="py-24 bg-charcoal-light border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center max-w-3xl mx-auto mb-20">
+                <h2 class="text-4xl font-heading font-bold mb-4">The <span class="text-gold">Fancify</span> Ecosystem</h2>
+                <div class="w-24 h-1 bg-loftgreen mx-auto mb-6"></div>
+                <p class="text-gray-400 text-lg">We are bridging the gap between historical legacy and cutting-edge edutainment technology.</p>
+            </div>
+
+            <div class="grid lg:grid-cols-3 gap-8">
+                <!-- Product 1: VR Birdcare -->
+                <div class="bg-charcoal p-8 rounded-2xl card-hover relative group">
+                    <div class="absolute top-0 right-0 bg-gold text-charcoal text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-xl uppercase tracking-widest">VR / PC / Mobile</div>
+                    <i class="fa-solid fa-vr-cardboard text-5xl text-skyblue mb-6 group-hover:scale-110 transition-transform"></i>
+                    <h3 class="text-2xl font-bold text-white mb-4">Immersive Birdcare</h3>
+                    <p class="text-gray-400 mb-6">Meet "Smith", your 3D professional guide. Learn realistic avian husbandry in a high-fidelity loft.</p>
+                    <ul class="text-gray-500 space-y-2 text-sm mb-6">
+                        <li><i class="fa-solid fa-check text-loftgreen mr-2"></i> Hygiene & Scraper Mechanics</li>
+                        <li><i class="fa-solid fa-check text-loftgreen mr-2"></i> Predator-proof Architecture</li>
+                        <li><i class="fa-solid fa-check text-loftgreen mr-2"></i> Whistle & Obedience Training</li>
+                    </ul>
+                </div>
+
+                <!-- Product 2: STEM Simulator -->
+                <div class="bg-charcoal p-8 rounded-2xl card-hover relative group">
+                    <div class="absolute top-0 right-0 bg-loftgreen text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-xl uppercase tracking-widest">Logic Engine</div>
+                    <i class="fa-solid fa-microchip text-5xl text-gold mb-6 group-hover:scale-110 transition-transform"></i>
+                    <h3 class="text-2xl font-bold text-white mb-4">3D Racing Simulator</h3>
+                    <p class="text-gray-400 mb-4">A data-driven Follow-Cam racing engine where users apply STEM principles to win.</p>
+                    <div class="math-block p-3 rounded-lg mb-4 text-sm text-gray-300">
+                        <span class="block text-xs text-skyblue uppercase mb-1">Velocity Calculation:</span>
+                        <math>V = d / t</math> <span class="opacity-50 text-xs ml-2">(Yards per Minute)</span>
+                    </div>
+                    <ul class="text-gray-500 space-y-2 text-sm">
+                        <li><i class="fa-solid fa-bolt text-gold mr-2"></i> Biology: Carb vs. Protein diets</li>
+                        <li><i class="fa-solid fa-cloud-rain text-skyblue mr-2"></i> Physics: Rainbands & Wind impact</li>
+                    </ul>
+                </div>
+
+                <!-- Product 3: Lesson Packs -->
+                <div class="bg-charcoal p-8 rounded-2xl card-hover relative group">
+                    <div class="absolute top-0 right-0 bg-skyblue text-white text-xs font-bold px-3 py-1 rounded-bl-lg rounded-tr-xl uppercase tracking-widest">Education</div>
+                    <i class="fa-solid fa-graduation-cap text-5xl text-loftgreen mb-6 group-hover:scale-110 transition-transform"></i>
+                    <h3 class="text-2xl font-bold text-white mb-4">School Workshop Packs</h3>
+                    <p class="text-gray-400 mb-6">Digital books, interactive flashcards, and Local LAN multiplayer racing designed for the classroom.</p>
+                    <ul class="text-gray-500 space-y-2 text-sm">
+                        <li><i class="fa-solid fa-book text-skyblue mr-2"></i> WWII Dickin Medal History</li>
+                        <li><i class="fa-solid fa-globe text-skyblue mr-2"></i> Geography & Routing Tasks</li>
+                        <li><i class="fa-solid fa-store text-skyblue mr-2"></i> Bulkstore Supply Exchange</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Audience Section -->
+    <section id="audiences" class="py-24 bg-charcoal border-t border-b border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-2 gap-16 items-center">
+                <div>
+                    <h2 class="text-4xl font-heading font-bold mb-6">Built for the <span class="text-gold">Community</span></h2>
+                    <p class="text-gray-400 text-lg mb-8">Fancify is optimized for low-end PCs and mobile devices to ensure socio-economic inclusion. We are targeting a diverse demographic to revitalize the sport.</p>
+                    
+                    <div class="space-y-6">
+                        <div class="bg-charcoal-light p-6 rounded-2xl border border-white/5 flex gap-4 items-center">
+                            <div class="text-3xl text-gold w-12 text-center"><i class="fa-solid fa-child-reaching"></i></div>
+                            <div>
+                                <h4 class="font-bold text-white uppercase tracking-wider text-sm">Youth & Students (Age 10+)</h4>
+                                <p class="text-gray-500 text-sm mt-1">Engaging Gen-Alpha through TikTok content, Gamification, and STEM-focused school curriculums.</p>
+                            </div>
+                        </div>
+                        <div class="bg-charcoal-light p-6 rounded-2xl border border-white/5 flex gap-4 items-center">
+                            <div class="text-3xl text-loftgreen w-12 text-center"><i class="fa-solid fa-house-flag"></i></div>
+                            <div>
+                                <h4 class="font-bold text-white uppercase tracking-wider text-sm">Rural & Suburban Clubs</h4>
+                                <p class="text-gray-500 text-sm mt-1">Providing tools to existing associations to modernize recruitment and simulate off-season training.</p>
+                            </div>
+                        </div>
+                        <div class="bg-charcoal-light p-6 rounded-2xl border border-white/5 flex gap-4 items-center">
+                            <div class="text-3xl text-skyblue w-12 text-center"><i class="fa-solid fa-horse"></i></div>
+                            <div>
+                                <h4 class="font-bold text-white uppercase tracking-wider text-sm">Animal Husbandry Enthusiasts</h4>
+                                <p class="text-gray-500 text-sm mt-1">Offline marketing via Pony & Cobb associations to cross-promote traditional animal care hobbies.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="relative">
+                    <!-- Stylized Graphic -->
+                    <div class="aspect-square rounded-full border-4 border-dashed border-gray-700 flex items-center justify-center relative animate-[spin_60s_linear_infinite]">
+                        <div class="absolute w-full h-full rounded-full border-2 border-gold/30 scale-90"></div>
+                        <div class="absolute w-full h-full rounded-full border border-skyblue/30 scale-75"></div>
+                    </div>
+                    <div class="absolute inset-0 flex items-center justify-center flex-col text-center">
+                        <i class="fa-solid fa-network-wired text-6xl text-gold mb-4"></i>
+                        <h3 class="text-2xl font-bold font-heading">National<br>Scale</h3>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Cause of Action / Support Section -->
+    <section id="support" class="py-24 bg-charcoal-light relative overflow-hidden">
+        <!-- Background accents -->
+        <div class="absolute top-0 right-0 w-96 h-96 bg-gold/5 rounded-full blur-3xl translate-x-1/2 -translate-y-1/2"></div>
+        <div class="absolute bottom-0 left-0 w-96 h-96 bg-skyblue/5 rounded-full blur-3xl -translate-x-1/2 translate-y-1/2"></div>
+
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <h2 class="text-5xl font-heading font-bold mb-6">Join the <span class="text-gold">Rescue Mission</span></h2>
+            <p class="text-xl text-gray-300 mb-12">
+                We are actively seeking prize funding, partnerships, and alignment with the <strong>UK Heritage Lottery Fund</strong>. Help us cover cloud infrastructure and the logistics of deploying VR headsets to schools nationwide.
+            </p>
+
+            <div class="grid sm:grid-cols-2 gap-6 mb-12 text-left">
+                <div class="bg-charcoal p-8 rounded-2xl border border-gold/20">
+                    <h3 class="text-gold font-bold text-xl mb-3"><i class="fa-solid fa-hand-holding-dollar mr-2"></i> For Investors / Judges</h3>
+                    <p class="text-gray-400 text-sm">Your funding directly supports server infrastructure for Local LAN racing and ensures low-end device optimization for socioeconomic inclusivity.</p>
+                </div>
+                <div class="bg-charcoal p-8 rounded-2xl border border-skyblue/20">
+                    <h3 class="text-skyblue font-bold text-xl mb-3"><i class="fa-solid fa-school mr-2"></i> For Educators</h3>
+                    <p class="text-gray-400 text-sm">Pre-order our "Lesson Packs". Bring interactive biology, physics, and history directly into your STEM curriculum.</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                <button class="bg-gold text-charcoal px-10 py-5 rounded-full font-heading font-bold text-xl hover:bg-yellow-500 transition-all shadow-[0_0_30px_rgba(212,175,55,0.4)] uppercase tracking-widest w-full sm:w-auto">
+                    Contact for Partnership
+                </button>
+                <a href="https://thatisdrtruman.github.io/3ms-indev-showcase/pigeon_race" target="_blank" rel="noopener noreferrer" class="bg-charcoal border border-skyblue text-skyblue px-10 py-5 rounded-full font-heading font-bold text-xl hover:bg-skyblue/10 transition-all uppercase tracking-widest w-full sm:w-auto flex items-center justify-center gap-2">
+                    <i class="fa-solid fa-gamepad"></i> Play 2D Demo
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-charcoal pt-16 pb-8 border-t border-gray-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid md:grid-cols-4 gap-8 mb-12">
+                <div class="col-span-2">
+                    <div class="flex items-center gap-3 mb-6">
+                        <i class="fa-solid fa-dove text-gold text-3xl"></i>
+                        <span class="font-heading font-bold text-2xl tracking-wider text-white uppercase">Fancify</span>
+                    </div>
+                    <p class="text-gray-500 max-w-sm mb-6">An edutainment VR and mobile simulator preserving the 1,000-year-old heritage of pigeon racing.</p>
+                    <div class="flex gap-4">
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-gold hover:text-charcoal transition-colors"><i class="fa-brands fa-tiktok"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-gold hover:text-charcoal transition-colors"><i class="fa-brands fa-instagram"></i></a>
+                        <a href="#" class="w-10 h-10 rounded-full bg-gray-800 flex items-center justify-center text-gray-400 hover:bg-gold hover:text-charcoal transition-colors"><i class="fa-brands fa-youtube"></i></a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold uppercase tracking-wider text-sm mb-6">Platform</h4>
+                    <ul class="space-y-3 text-gray-500">
+                        <li><a href="#" class="hover:text-gold transition-colors">VR App</a></li>
+                        <li><a href="https://thatisdrtruman.github.io/3ms-indev-showcase/pigeon_race" target="_blank" rel="noopener noreferrer" class="hover:text-gold transition-colors">2D Simulator</a></li>
+                        <li><a href="#" class="hover:text-gold transition-colors">Lesson Packs</a></li>
+                        <li><a href="#" class="hover:text-gold transition-colors">Bulkstore</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-bold uppercase tracking-wider text-sm mb-6">Organization</h4>
+                    <ul class="space-y-3 text-gray-500">
+                        <li><a href="#" class="hover:text-gold transition-colors">About Us</a></li>
+                        <li><a href="#" class="hover:text-gold transition-colors">UK Heritage Lottery</a></li>
+                        <li><a href="#" class="hover:text-gold transition-colors">Pony & Cobb Info</a></li>
+                        <li><a href="#" class="hover:text-gold transition-colors">Contact</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-gray-600 text-sm">
+                <p>&copy; 2026 Fancify Racing Pigeons. All rights reserved.</p>
+                <p class="mt-2 md:mt-0">Founded by J. Soon Livan | HCI Specialist</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script>
+        // Mobile Menu Toggle
+        const mobileBtn = document.getElementById('mobile-menu-btn');
+        const mobileMenu = document.getElementById('mobile-menu');
+
+        mobileBtn.addEventListener('click', () => {
+            mobileMenu.classList.toggle('hidden');
+        });
+
+        // Navbar blur effect on scroll
+        window.addEventListener('scroll', () => {
+            const nav = document.getElementById('navbar');
+            if (window.scrollY > 20) {
+                nav.classList.add('shadow-lg');
+                nav.classList.replace('bg-transparent', 'glass-nav');
+            } else {
+                nav.classList.remove('shadow-lg');
+            }
+        });
+    </script>
+</body>
+</html>
