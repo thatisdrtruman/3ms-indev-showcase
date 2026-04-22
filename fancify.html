@@ -69,6 +69,8 @@
         
         /* Math formatting */
         math { font-family: 'Times New Roman', Times, serif; font-size: 1.2em; color: #D4AF37; }
+
+        .cursor-zoom-in { cursor: zoom-in; }
     </style>
 </head>
 <body class="antialiased selection:bg-gold selection:text-charcoal">
@@ -143,8 +145,8 @@
                 <div class="bg-charcoal-light p-10 rounded-3xl border border-red-900/30 relative overflow-hidden">
                     <div class="absolute top-0 right-0 w-64 h-64 bg-red-900/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
                     <h3 class="text-7xl font-heading font-bold text-red-500 mb-2">83%</h3>
-                    <h4 class="text-2xl font-bold text-white mb-4 uppercase tracking-wider">Decline in UK Clubs</h4>
-                    <p class="text-gray-400">In 1980, there were 60,000 competitive pigeon organizations in the UK. Today, there are less than 10,000. Without digital intervention, a thousand-year-old knowledge of animal husbandry will vanish.</p>
+                    <h4 class="text-2xl font-bold text-white mb-4 uppercase tracking-wider">Decline in UK Membership</h4>
+                    <p class="text-gray-400">In 1980, there were 60,000 competitive pigeon members in the UK. Today, there are less than 10,000. Without digital intervention, a thousand-year-old knowledge of animal husbandry will vanish.</p>
                 </div>
                 <div class="space-y-6">
                     <div class="flex items-start gap-4">
@@ -196,8 +198,8 @@
                 <img src="https://lh6.ggpht.com/Da2ADuzNX-M1Psxzx-O1PdBYeQ35W6rLRVLpU9tkMmMaRNxeTad9IUP9J0r8edHjULMQ12uNMNFwQ9Wzo2Bb1UDT3AQ=s0" alt="Pigeon release at dawn" class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-700">
                 <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
                 <div class="absolute bottom-6 left-6">
-                    <h3 class="text-white font-heading font-bold text-xl">The Racing Heritage</h3>
-                    <p class="text-gray-300 text-sm">60+ mile stamina and speed tests</p>
+                    <h3 class="text-white font-heading font-bold text-xl">The Racing and Pigeon Heritage</h3>
+                    <p class="text-gray-300 text-sm">60+ mile stamina, speed tests, human aids</p>
                 </div>
             </div>
         </div>
@@ -224,6 +226,15 @@
                         <li><i class="fa-solid fa-check text-loftgreen mr-2"></i> Predator-proof Architecture</li>
                         <li><i class="fa-solid fa-check text-loftgreen mr-2"></i> Whistle & Obedience Training</li>
                     </ul>
+                    <div class="mt-8 space-y-4">
+                        <div class="rounded-xl overflow-hidden border border-white/10 bg-black">
+                            <video src="2d_pigeon_sim.mp4" controls class="w-full"></video>
+                        </div>
+                        <a href="https://thatisdrtruman.github.io/3ms-indev-showcase/pigeon_race" target="_blank" 
+                           class="block w-full text-center bg-skyblue text-white py-3 rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-skyblue/80 transition-all">
+                            Play 2D Race Demo
+                        </a>
+                    </div>
                 </div>
 
                 <!-- Product 2: STEM Simulator -->
@@ -240,6 +251,12 @@
                         <li><i class="fa-solid fa-bolt text-gold mr-2"></i> Biology: Carb vs. Protein diets</li>
                         <li><i class="fa-solid fa-cloud-rain text-skyblue mr-2"></i> Physics: Rainbands & Wind impact</li>
                     </ul>
+                    <div class="mt-8">
+                        <a href="https://thatisdrtruman.github.io/3ms-indev-showcase/pigeon_loft_3d/" target="_blank" 
+                           class="block w-full text-center bg-gold text-charcoal py-3 rounded-xl font-bold uppercase text-xs tracking-widest hover:bg-yellow-500 transition-all shadow-[0_0_15px_rgba(212,175,55,0.2)]">
+                            Launch 3D Simulator
+                        </a>
+                    </div>
                 </div>
 
                 <!-- Product 3: Lesson Packs -->
@@ -253,6 +270,13 @@
                         <li><i class="fa-solid fa-globe text-skyblue mr-2"></i> Geography & Routing Tasks</li>
                         <li><i class="fa-solid fa-store text-skyblue mr-2"></i> Bulkstore Supply Exchange</li>
                     </ul>
+                    <div class="mt-8 space-y-4">
+                        <img src="vr_workshop_kit.jpg" alt="VR Workshop Kit" class="w-full rounded-xl border border-white/10 shadow-lg">
+                        <div class="bg-charcoal-light p-5 rounded-xl border border-white/5">
+                            <p class="text-gold font-bold mb-2">Hire from £100 (2 hours)</p>
+                            <p class="text-xs text-gray-400 leading-relaxed">Our kit has everything you need to be a pigeon expert! You get to keep the flashcards, sticker albums, guides, hand fans, and paper planes. We only take back the VR headsets, screens, and tablets.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -339,6 +363,16 @@
         </div>
     </section>
 
+    <!-- Lightbox Modal for Zooming Images and Videos -->
+    <div id="lightbox" class="fixed inset-0 z-[100] hidden bg-black/95 backdrop-blur-xl flex items-center justify-center p-4 cursor-zoom-out transition-opacity duration-300">
+        <button class="absolute top-6 right-6 text-white/50 hover:text-gold text-4xl transition-colors">
+            <i class="fa-solid fa-xmark"></i>
+        </button>
+        <div id="lightbox-content" class="max-w-6xl w-full flex items-center justify-center scale-95 opacity-0 transition-all duration-300">
+            <!-- Media content injected via JavaScript -->
+        </div>
+    </div>
+
     <!-- Footer -->
     <footer class="bg-charcoal pt-16 pb-8 border-t border-gray-800">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -377,6 +411,7 @@
             <div class="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center text-gray-600 text-sm">
                 <p>&copy; 2026 Fancify Racing Pigeons. All rights reserved.</p>
                 <p class="mt-2 md:mt-0">Founded by J. Soon Livan | HCI Specialist</p>
+                <p class="mt-2 md:mt-0">Fancify is part of the Mooters, Mooteds and Moots series, its website can be found <a href="index.html" class="text-gold underline">here.</a></p>
             </div>
         </div>
     </footer>
@@ -401,6 +436,52 @@
                 nav.classList.remove('shadow-lg');
             }
         });
+
+        // Modern Lightbox / Zoom Feature
+        const lightbox = document.getElementById('lightbox');
+        const lightboxInner = document.getElementById('lightbox-content');
+
+        const openLightbox = (element) => {
+            lightboxInner.innerHTML = '';
+            // Clone the element to maintain its source/attributes
+            const clone = element.cloneNode(true);
+            
+            // Reset classes for full-screen view
+            clone.className = "max-w-full max-h-[85vh] rounded-xl shadow-2xl object-contain border border-white/10";
+            
+            if (clone.tagName === 'VIDEO') {
+                clone.setAttribute('controls', 'true');
+                clone.play();
+            }
+
+            lightboxInner.appendChild(clone);
+            lightbox.classList.remove('hidden');
+            
+            // Animation trigger
+            setTimeout(() => {
+                lightboxInner.classList.remove('scale-95', 'opacity-0');
+            }, 10);
+            
+            // Prevent page scrolling while open
+            document.body.style.overflow = 'hidden';
+        };
+
+        const closeLightbox = () => {
+            lightboxInner.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => {
+                lightbox.classList.add('hidden');
+                lightboxInner.innerHTML = '';
+                document.body.style.overflow = '';
+            }, 300);
+        };
+
+        // Apply feature to all content media in sections
+        document.querySelectorAll('section img, section video').forEach(media => {
+            media.classList.add('cursor-zoom-in', 'transition-transform', 'duration-300', 'hover:scale-[1.02]');
+            media.addEventListener('click', () => openLightbox(media));
+        });
+
+        lightbox.addEventListener('click', closeLightbox);
     </script>
 </body>
 </html>
