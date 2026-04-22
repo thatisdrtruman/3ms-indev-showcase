@@ -1,0 +1,492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Pigeon Loft 3D</title>
+  <style>
+    body { margin: 0; overflow: hidden; background: #111; }
+    #info {
+      position: absolute; top: 10px; left: 10px;
+      color: white; font-family: sans-serif; font-size: 14px;
+      background: rgba(0,0,0,0.4); padding: 6px 10px; border-radius: 4px;
+    }
+    #timer {
+      position: absolute; top: 10px; right: 10px;
+      color: #0f0; font-family: monospace; font-size: 20px;
+      background: rgba(0,0,0,0.8); padding: 5px;
+    }
+  </style>
+</head>
+<body>
+<div id="info">Pigeon Loft 3D – Camera orbit, pigeons fly, truck transport, scoreboard.</div>
+<script type="importmap">
+  {
+    "imports": {
+      "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+      "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/"
+    }
+  }
+</script>
+<script type="module">
+  import * as THREE from "three";
+  import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x202530);
+
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 1000);
+  // Camera starts inside the loft
+  camera.position.set(8.5, 1.5, 1.5);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth, window.innerHeight);
+  document.body.appendChild(renderer.domElement);
+
+  const controls = new OrbitControls(camera, renderer.domElement);
+  controls.enabled = false; // Disable manual controls for the cinematic experience
+
+  scene.add(new THREE.HemisphereLight(0xffffff, 0x444444, 0.7));
+  const dir = new THREE.DirectionalLight(0xffffff, 0.8);
+  dir.position.set(10, 20, 10);
+  scene.add(dir);
+
+  const ground = new THREE.Mesh(
+    new THREE.PlaneGeometry(80, 80),
+    new THREE.MeshStandardMaterial({ color: 0x4f7f3a })
+  );
+  ground.rotation.x = -Math.PI / 2;
+  ground.position.y = -0.02; // Offset downward to prevent Z-fighting/flicker
+  scene.add(ground);
+
+  // Shallow Grass Hill at the field position
+  const hill = new THREE.Mesh(
+    new THREE.SphereGeometry(10, 32, 16),
+    new THREE.MeshStandardMaterial({ color: 0x5a8a45 })
+  );
+  hill.scale.set(2, 0.08, 2);
+  hill.position.set(-20, 0, -20);
+  scene.add(hill);
+
+  // Curved Road
+  const roadPoints = [
+    new THREE.Vector3(15, 0.02, 10),
+    new THREE.Vector3(22, 0.02, 0),
+    new THREE.Vector3(10, 0.02, -18),
+    new THREE.Vector3(-20, 0.02, -20)
+  ];
+  const roadCurve = new THREE.CatmullRomCurve3(roadPoints);
+  const roadGeo = new THREE.TubeGeometry(roadCurve, 64, 1.2, 8, false);
+  const roadMat = new THREE.MeshStandardMaterial({ color: 0x333333 });
+  const roadMesh = new THREE.Mesh(roadGeo, roadMat);
+  roadMesh.scale.y = 0.05; // Flatten the tube into a road strip
+  roadMesh.position.y = 0.01;
+  scene.add(roadMesh);
+
+  // The Loft (Shell)
+  const loft = new THREE.Mesh(
+    new THREE.BoxGeometry(5, 3, 4),
+    new THREE.MeshStandardMaterial({ color: 0x8b5a2b, side: THREE.BackSide })
+  );
+  loft.position.set(8, 1.5, 0);
+  scene.add(loft);
+
+  // Support Beams for Loft 1
+  for (let i = -1; i <= 1; i++) {
+    const beam = new THREE.Mesh(new THREE.BoxGeometry(0.15, 0.15, 4), new THREE.MeshStandardMaterial({color: 0x4a2a0a}));
+    beam.position.set(8 + i * 1.5, 2.8, 0);
+    scene.add(beam);
+  }
+
+  // Second Loft (White)
+  const loft2 = new THREE.Mesh(
+    new THREE.BoxGeometry(5, 3, 4),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, side: THREE.BackSide })
+  );
+  loft2.position.set(-8, 3, 0);
+  scene.add(loft2);
+
+  // Stilts for Loft 2
+  const stiltGeo = new THREE.CylinderGeometry(0.05, 0.05, 1.5);
+  const stiltMat = new THREE.MeshStandardMaterial({color: 0x4a2a0a});
+  [[-10, 0.75, -1.5], [-6, 0.75, -1.5], [-10, 0.75, 1.5], [-6, 0.75, 1.5]].forEach(pos => {
+    const stilt = new THREE.Mesh(stiltGeo, stiltMat);
+    stilt.position.set(...pos);
+    scene.add(stilt);
+  });
+
+  // Straw/Sticks for Nests
+  const strawMat = new THREE.MeshStandardMaterial({color: 0xeedd82});
+  for(let i=0; i<160; i++) {
+    const straw = new THREE.Mesh(new THREE.CylinderGeometry(0.005, 0.005, 0.4), strawMat);
+    let lx, ly, lz;
+    if (i < 55) { lx = 8; ly = 0.01; lz = 0; }
+    else if (i < 110) { lx = -8; ly = 1.51; lz = 0; }
+    else { lx = 0; ly = 9.01; lz = -30; }
+    straw.position.set(lx + (Math.random()-0.5)*4.5, ly, lz + (Math.random()-0.5)*3.5);
+    straw.rotation.set(Math.PI/2, Math.random()*Math.PI, 0);
+    scene.add(straw);
+  }
+
+  // Three-Storey House with Yellow Loft
+  const house = new THREE.Mesh(
+    new THREE.BoxGeometry(6, 9, 6),
+    new THREE.MeshStandardMaterial({ color: 0xaaaaaa })
+  );
+  house.position.set(0, 4.5, -30);
+  scene.add(house);
+
+  const loft3 = new THREE.Mesh(
+    new THREE.BoxGeometry(4, 2.5, 4),
+    new THREE.MeshStandardMaterial({ color: 0xffff00, side: THREE.BackSide })
+  );
+  loft3.position.set(0, 10.25, -30);
+  scene.add(loft3);
+  const loftCenter3 = new THREE.Vector3(0, 10.25, -30);
+
+  // Loft Entry Hole
+  const holeGeo = new THREE.CircleGeometry(0.6, 16);
+  const holeMat = new THREE.MeshBasicMaterial({ color: 0x000000 });
+  const loftHole = new THREE.Mesh(holeGeo, holeMat);
+  loftHole.position.set(5.49, 1.5, 0); // Side wall of the loft
+  loftHole.rotation.y = -Math.PI / 2;
+  scene.add(loftHole);
+
+  // White Loft Entry Hole
+  const loftHole2 = new THREE.Mesh(holeGeo, holeMat);
+  loftHole2.position.set(-5.51, 3, 0);
+  loftHole2.rotation.y = Math.PI / 2;
+  scene.add(loftHole2);
+  const holePos2 = new THREE.Vector3(-5.5, 3, 0);
+
+  // Yellow Loft Entry Hole (Facing the road)
+  const loftHole3 = new THREE.Mesh(holeGeo, holeMat);
+  loftHole3.position.set(0, 10.25, -27.99);
+  loftHole3.rotation.y = 0;
+  scene.add(loftHole3);
+  const holePos3 = new THREE.Vector3(0, 10.25, -28);
+
+  const perch = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.05, 0.05, 4, 16),
+    new THREE.MeshStandardMaterial({ color: 0x5a3a1a })
+  );
+  perch.rotation.z = Math.PI / 2;
+  perch.position.set(6.5, 1.2, 0);
+  scene.add(perch);
+  
+  // Interaction Items
+  const bowl = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.2, 0.1, 16), new THREE.MeshStandardMaterial({color: 0x444444}));
+  bowl.position.set(8, 0.05, 1);
+  scene.add(bowl);
+
+  const foodBag = new THREE.Mesh(new THREE.BoxGeometry(0.3, 0.5, 0.15), new THREE.MeshStandardMaterial({color: 0xd2b48c}));
+  scene.add(foodBag);
+
+  // Food Sprinkles (Seeds)
+  const seedsGroup = new THREE.Group();
+  const seedGeo = new THREE.SphereGeometry(0.02, 4, 4);
+  const seedMat = new THREE.MeshStandardMaterial({color: 0xffcc66});
+  for(let i=0; i<30; i++) {
+    seedsGroup.add(new THREE.Mesh(seedGeo, seedMat));
+  }
+  scene.add(seedsGroup);
+
+  // Improved Shovel
+  const spade = new THREE.Group();
+  const spadeHandle = new THREE.Mesh(new THREE.CylinderGeometry(0.02, 0.02, 1.2), new THREE.MeshStandardMaterial({color: 0x5a3a1a}));
+  spadeHandle.rotation.x = Math.PI / 4;
+  const spadeBlade = new THREE.Mesh(new THREE.BoxGeometry(0.4, 0.02, 0.25), new THREE.MeshStandardMaterial({color: 0x888888}));
+  spadeBlade.position.set(0, -0.4, 0.4); // Scraper at the end of angled handle
+  spade.add(spadeHandle, spadeBlade);
+  scene.add(spade);
+  
+  // Poop Splatter
+  const poop = new THREE.Mesh(new THREE.CircleGeometry(0.15, 8), new THREE.MeshStandardMaterial({color: 0xeeeeee, side: THREE.DoubleSide}));
+  poop.rotation.x = -Math.PI / 2;
+  poop.position.set(7.5, 0.01, -0.5);
+  scene.add(poop);
+
+  // Improved Hand
+  const hand = new THREE.Group();
+  const palm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.05, 0.2), new THREE.MeshStandardMaterial({color: 0xffdbac}));
+  hand.add(palm);
+  for(let i=0; i<4; i++) {
+    const finger = new THREE.Mesh(new THREE.BoxGeometry(0.04, 0.03, 0.15), new THREE.MeshStandardMaterial({color: 0xffdbac}));
+    finger.position.set(-0.08 + i*0.05, 0, 0.15);
+    hand.add(finger);
+  }
+  scene.add(hand);
+
+  // Car with Opening Roof
+  const car = new THREE.Group();
+  // Hollow Body using BackSide
+  const carBody = new THREE.Mesh(
+    new THREE.BoxGeometry(2.5, 0.8, 1.2), 
+    new THREE.MeshStandardMaterial({color: 0x0000ff, side: THREE.DoubleSide, transparent: true, opacity: 1})
+  );
+  const carRoofGroup = new THREE.Group();
+  const carRoofPlate = new THREE.Mesh(
+    new THREE.BoxGeometry(1.4, 0.05, 1.2), 
+    new THREE.MeshStandardMaterial({color: 0x000099, side: THREE.DoubleSide})
+  );
+  carRoofPlate.position.set(-0.7, 0, 0); // Offset for hinge
+  carRoofGroup.add(carRoofPlate);
+  carRoofGroup.position.set(0.5, 0.4, 0);
+  
+  car.add(carBody, carRoofGroup);
+  car.position.set(15, 0.4, 10);
+  scene.add(car);
+
+  // Pigeon Factory
+  function createPigeon() {
+    const group = new THREE.Group();
+    const body = new THREE.Mesh(new THREE.CapsuleGeometry(0.1, 0.2, 4, 8), new THREE.MeshStandardMaterial({color: 0x777777 + Math.random()*0x222222}));
+    body.rotation.x = Math.PI/2;
+    const head = new THREE.Mesh(new THREE.SphereGeometry(0.08, 8, 8), new THREE.MeshStandardMaterial({color: 0x999999}));
+    head.position.set(0, 0.1, 0.15);
+    const beak = new THREE.Mesh(new THREE.ConeGeometry(0.02, 0.05, 4), new THREE.MeshStandardMaterial({color: 0xffcc00}));
+    beak.position.set(0, 0.1, 0.23); beak.rotation.x = Math.PI/2;
+    
+    const wingGeo = new THREE.PlaneGeometry(0.25, 0.15);
+    const wingMat = new THREE.MeshStandardMaterial({color: 0x777777, side: THREE.DoubleSide});
+    const lWing = new THREE.Mesh(wingGeo, wingMat);
+    lWing.position.set(-0.15, 0.05, 0);
+    const rWing = new THREE.Mesh(wingGeo, wingMat);
+    rWing.position.set(0.15, 0.05, 0);
+    
+    group.add(body, head, beak, lWing, rWing);
+    const scale = 0.8 + Math.random() * 0.5;
+    group.scale.set(scale, scale, scale);
+
+    return { 
+      group, 
+      lWing, 
+      rWing,
+      homeOffset: new THREE.Vector3((Math.random()-0.5)*4, (Math.random()-0.5)*1, (Math.random()-0.5)*3),
+      speed: 0.05 + Math.random() * 0.75,
+      lift: 0.5 + Math.random() * 0.5,
+      id: Math.floor(Math.random() * 9000) + 1000
+    };
+  }
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 256;
+  const ctx = canvas.getContext('2d');
+  
+  const scoreboard = new THREE.Mesh(
+    new THREE.PlaneGeometry(4, 2),
+    new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas) })
+  );
+
+  const pigeons = [];
+  const loftCenter = new THREE.Vector3(8, 1.5, 0);
+  const loftCenter2 = new THREE.Vector3(-8, 3, 0);
+  const holePos = new THREE.Vector3(5.5, 1.5, 0);
+  const fieldPos = new THREE.Vector3(-20, 0.8, -20); // Slightly higher for the hill top
+
+  for (let i = 0; i < 39; i++) {
+    const pData = createPigeon();
+    const startPos = i < 13 ? loftCenter : (i < 26 ? loftCenter2 : loftCenter3);
+    pData.group.position.copy(startPos).add(pData.homeOffset);
+    scene.add(pData.group);
+    pigeons.push(pData);
+  }
+
+  const clock = new THREE.Clock();
+  let holeFlashTimer = 0;
+
+  function animate() {
+    requestAnimationFrame(animate);
+    const t = clock.getElapsedTime() % 30;
+
+    // Reset visibility
+    foodBag.visible = false; spade.visible = false; hand.visible = false;
+    scoreboard.visible = false;
+    carRoofGroup.rotation.z = 0;
+    carBody.material.opacity = 1.0;
+    carBody.material.transparent = false;
+    seedsGroup.visible = false;
+    holeMat.color.set(0x000000);
+
+    // Reset poop visibility at loop start
+    if (t < 0.1) poop.visible = true;
+
+    // Fixed Car start/end positions for deterministic movement
+    const carStartPos = new THREE.Vector3(15, 0.4, 10);
+
+    // SCENE LOGIC
+    if (t < 6) {
+      // SCENE 1: Feeding (Inside Loft)
+      camera.position.lerp(new THREE.Vector3(9.5, 1.8, 1.5), 0.01);
+      camera.lookAt(bowl.position);
+      
+      foodBag.visible = true;
+      foodBag.position.set(8, 1.2 + Math.sin(t*2)*0.1, 1);
+      foodBag.rotation.z = Math.PI / 4;
+
+      seedsGroup.visible = true;
+      seedsGroup.children.forEach((s, i) => {
+        s.position.y = 1.1 - ((t * 5 + i * 0.2) % 1.1);
+        s.position.x = 8 + (Math.random() - 0.5) * 0.2;
+        s.position.z = 1 + (Math.random() - 0.5) * 0.2;
+      });
+      
+      pigeons.forEach((p, i) => {
+        p.group.visible = true;
+        const target = bowl.position.clone().add(new THREE.Vector3(Math.cos(i)*0.8, 0.15, Math.sin(i)*0.8));
+        p.group.position.lerp(target, 0.02);
+        // Face the bowl
+        p.group.lookAt(bowl.position.x, p.group.position.y, bowl.position.z);
+      });
+    } 
+    else if (t < 11) {
+      // SCENE 2: Cleaning (Poop/Spade)
+      camera.position.set(8.5, 1.0, -1.5);
+      camera.lookAt(poop.position);
+      spade.visible = true;
+      spade.position.set(7.5 + Math.sin(t*3)*0.5, 0.2, -0.5);
+      if (t > 10) poop.visible = false;
+    }
+    else if (t < 16) {
+      // SCENE 3: Grabbing pigeon & Follow
+      hand.visible = true;
+      const grabT = Math.min(1, (t - 11) / 2.5);
+      const carLoadPos = carStartPos.clone().add(new THREE.Vector3(0, 0.5, 0));
+      
+      if (t < 13.5) {
+        hand.position.lerpVectors(new THREE.Vector3(10, 2, 4), pigeons[0].group.position, grabT);
+      } else {
+        const dropT = (t - 13.5) / 2.5;
+        pigeons[0].group.position.copy(hand.position);
+        hand.position.lerpVectors(pigeons[0].group.position.clone(), carLoadPos, dropT);
+      }
+
+      // Camera follows the hand closely
+      camera.position.lerp(hand.position.clone().add(new THREE.Vector3(1.5, 0.8, 1.5)), 0.1);
+      camera.lookAt(hand.position);
+    }
+    else if (t < 19) { 
+      // SCENE 4: Driving & Transparency
+      const driveT = Math.max(0, (t - 16) / 3);
+      
+      const pos = roadCurve.getPointAt(driveT);
+      car.position.copy(pos).add(new THREE.Vector3(0, 0.4, 0));
+      car.lookAt(roadCurve.getPointAt(Math.min(driveT + 0.01, 1)).add(new THREE.Vector3(0, 0.4, 0)));
+      
+      if (t < 17.5) {
+        carBody.material.transparent = true;
+        carBody.material.opacity = 0.4; // Slightly transparent to show birds
+      }
+
+      camera.position.set(car.position.x + 6, 4, car.position.z + 6);
+      camera.lookAt(car.position);
+      
+      // Keep all 39 pigeons inside the car
+      for(let i=0; i<39; i++) {
+        pigeons[i].group.position.copy(car.position).add(new THREE.Vector3((i%7)*0.15 - 0.45, -0.1, (Math.floor(i/7))*0.15 - 0.45));
+      }
+
+      if (t > 18.5) {
+        carRoofGroup.rotation.z = Math.min(Math.PI * 0.8, (t-18.5)*4); // Roof opens back
+      }
+    }
+    else if (t < 25) {
+      // SCENE 5: Release (Climb then Fly Home)
+      const releaseT = (t - 19) / 6;
+      
+      // Camera near and facing the loft hole as birds fly in
+      camera.position.lerp(new THREE.Vector3(3, 3, 3), 0.05);
+      camera.lookAt(pigeons[0].group.position);
+      
+      pigeons.forEach((p, i) => {
+        if (t < 21) {
+          // Phase A: Climb to height
+          const climbTarget = p.group.position.clone();
+          climbTarget.y = 6 + p.lift;
+          p.group.position.lerp(climbTarget, 0.05);
+          p.group.lookAt(p.group.position.x, 10, p.group.position.z);
+        } else {
+          // Phase B: Fly to respective lofts (13 in each)
+          const myHole = i < 13 ? holePos : (i < 26 ? holePos2 : holePos3);
+          p.group.position.lerp(myHole, 0.07 * p.speed);
+          p.group.lookAt(myHole);
+          
+          // Enter hole logic
+          if (p.group.position.distanceTo(myHole) < 0.8) {
+            if (p.group.visible) {
+              p.group.visible = false;
+              holeFlashTimer = 10; // Trigger flash
+            }
+          }
+        }
+        p.group.position.y += Math.sin(t * 10 + i) * 0.02; // Flap wobble
+      });
+
+      if (holeFlashTimer > 0) {
+        holeMat.color.set(0xff0000);
+        holeFlashTimer--;
+      }
+    }
+    else {
+      // SCENE 6: Results
+      camera.position.lerp(new THREE.Vector3(0, 4, 8), 0.05);
+      camera.lookAt(loftCenter);
+      
+      scoreboard.visible = true;
+      scoreboard.position.set(3, 2.5, 5);
+      scoreboard.lookAt(camera.position);
+      updateScoreboard(ctx, canvas);
+      scoreboard.material.map.needsUpdate = true;
+      
+      scene.add(scoreboard);
+    }
+
+    // Global pigeon wing flap animation
+    pigeons.forEach((p) => {
+      const flap = Math.sin(Date.now() * 0.02) * 0.8;
+      p.lWing.rotation.z = flap;
+      p.rWing.rotation.z = -flap;
+    });
+
+    renderer.render(scene, camera);
+  }
+
+  function updateScoreboard(ctx, canvas) {
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(0,0,512,256);
+    ctx.strokeStyle = '#4e4eef';
+    ctx.lineWidth = 5;
+    ctx.strokeRect(5, 5, 502, 246);
+    
+    ctx.fillStyle = '#0f0';
+    ctx.font = 'bold 24px Courier New';
+    ctx.fillText('TERMINAL: RACE_LOG_V1.0', 30, 40);
+    
+    // Sort pigeons by speed (highest first)
+    const sorted = [...pigeons].sort((a, b) => b.speed - a.speed);
+    
+    ctx.font = '18px Courier New';
+    ctx.fillStyle = '#ffffff';
+    ctx.fillText('RANK   ID      TIME     SPEED (YPM)', 30, 80);
+    ctx.fillText('----------------------------------', 30, 95);
+
+    sorted.slice(0, 5).forEach((p, i) => {
+      const time = (30 / p.speed).toFixed(2);
+      const ypm = (p.speed * 2500).toFixed(0); // Convert to Yards Per Minute
+      ctx.fillText(`${i+1}.    #${p.id}   ${time}s    ${ypm} YPM`, 30, 125 + (i * 25));
+    });
+
+    ctx.fillStyle = '#ffd700';
+    ctx.fillText(`WINNER: ID #${sorted[0].id}!!`, 30, 235);
+  }
+
+  animate();
+
+  window.addEventListener('resize', () => {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  });
+</script>
+
+</body>
+</html>
