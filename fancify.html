@@ -396,6 +396,7 @@
                         <li><a href="https://thatisdrtruman.github.io/3ms-indev-showcase/pigeon_race" target="_blank" rel="noopener noreferrer" class="hover:text-gold transition-colors">2D Simulator</a></li>
                         <li><a href="#" class="hover:text-gold transition-colors">Lesson Packs</a></li>
                         <li><a href="#" class="hover:text-gold transition-colors">Bulkstore</a></li>
+                        <li><button onclick="openLeaflet()" class="hover:text-gold transition-colors">Leaflet</button></li>
                     </ul>
                 </div>
                 <div>
@@ -440,6 +441,12 @@
         // Modern Lightbox / Zoom Feature
         const lightbox = document.getElementById('lightbox');
         const lightboxInner = document.getElementById('lightbox-content');
+
+        const openLeaflet = () => {
+            const img = document.createElement('img');
+            img.src = 'fancify_leaflet.png';
+            openLightbox(img);
+        };
 
         const openLightbox = (element) => {
             lightboxInner.innerHTML = '';
